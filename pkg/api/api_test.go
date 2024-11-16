@@ -8,7 +8,7 @@ import (
 )
 
 var basicOpenAPI = &openapi.OpenAPI{
-	Openapi: "3.1.0",
+	OpenAPI: "3.1.0",
 	Servers: []openapi.Server{{URL: "https://api.example.com"}},
 	Paths: map[string]openapi.PathItem{
 		"/widgets": {
@@ -185,7 +185,7 @@ func TestGetAPI(t *testing.T) {
 		{
 			name: "resource with x-aep-resource annotation",
 			api: &openapi.OpenAPI{
-				Openapi: "3.1.0",
+				OpenAPI: "3.1.0",
 				Paths: map[string]openapi.PathItem{
 					"/widgets/{widget}": {
 						Get: &openapi.Operation{
@@ -231,7 +231,7 @@ func TestGetAPI(t *testing.T) {
 		{
 			name: "missing server URL",
 			api: &openapi.OpenAPI{
-				Openapi: "3.1.0",
+				OpenAPI: "3.1.0",
 				Servers: []openapi.Server{},
 			},
 			expectedError: "no server URL found in openapi, and none was provided",
@@ -239,7 +239,7 @@ func TestGetAPI(t *testing.T) {
 		{
 			name: "resource with user-settable create ID",
 			api: &openapi.OpenAPI{
-				Openapi: "3.1.0",
+				OpenAPI: "3.1.0",
 				Servers: []openapi.Server{{URL: "https://api.example.com"}},
 				Paths: map[string]openapi.PathItem{
 					"/widgets": {

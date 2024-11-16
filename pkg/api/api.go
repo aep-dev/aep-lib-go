@@ -11,6 +11,7 @@ import (
 
 type API struct {
 	ServerURL string
+	Name      string
 	Resources map[string]*Resource
 }
 
@@ -205,6 +206,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 
 	return &API{
 		ServerURL: serverURL,
+		Name:      api.Info.Title,
 		Resources: resourceBySingular,
 	}, nil
 }
@@ -272,11 +274,13 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 				return nil, fmt.Errorf("error parsing resource %q parent %q: %v", singular, parentSingular, err)
 			}
 			parents = append(parents, parentResource)
+			parentResource.Children = append(parentResource.Children, r)
 		}
 		r = &Resource{
 			Singular:     s.XAEPResource.Singular,
 			Plural:       s.XAEPResource.Plural,
 			Parents:      parents,
+			Children:     []*Resource{},
 			PatternElems: strings.Split(s.XAEPResource.Patterns[0], "/")[1:],
 			Schema:       s,
 		}
@@ -286,6 +290,8 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 			Schema:       s,
 			PatternElems: pattern,
 			Singular:     singular,
+			Parents:      []*Resource{},
+			Children:     []*Resource{},
 		}
 	}
 	resourceBySingular[singular] = r

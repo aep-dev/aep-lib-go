@@ -20,7 +20,7 @@ const (
 type OpenAPI struct {
 	// oas 2.0 has swagger in the root.k
 	Swagger    string              `json:"swagger,omitempty"`
-	Openapi    string              `json:"openapi,omitempty"`
+	OpenAPI    string              `json:"openapi,omitempty"`
 	Servers    []Server            `json:"servers,omitempty"`
 	Info       Info                `json:"info"`
 	Paths      map[string]PathItem `json:"paths"`
@@ -32,7 +32,7 @@ type OpenAPI struct {
 func (o *OpenAPI) OASVersion() string {
 	if o.Swagger == "2.0" {
 		return OAS2
-	} else if o.Openapi != "" {
+	} else if o.OpenAPI != "" {
 		return OAS3
 	}
 	return ""
@@ -118,11 +118,12 @@ type Operation struct {
 }
 
 type Parameter struct {
-	Name        string `json:"name"`
-	In          string `json:"in"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
-	Schema      Schema `json:"schema"`
+	Name        string  `json:"name"`
+	In          string  `json:"in"`
+	Description string  `json:"description"`
+	Required    bool    `json:"required"`
+	Schema      *Schema `json:"schema,omitempty"`
+	Type        string  `json:"type,omitempty"`
 }
 
 type Response struct {
@@ -145,15 +146,18 @@ type MediaType struct {
 }
 
 type Schema struct {
-	Type         string            `json:"type"`
-	Format       string            `json:"format,omitempty"`
-	Items        *Schema           `json:"items,omitempty"`
-	Properties   map[string]Schema `json:"properties,omitempty"`
-	Ref          string            `json:"$ref,omitempty"`
-	XAEPResource *XAEPResource     `json:"x-aep-resource,omitempty"`
-	ReadOnly     bool              `json:"readOnly,omitempty"`
-	Required     []string          `json:"required,omitempty"`
+	Type             string         `json:"type"`
+	Format           string         `json:"format,omitempty"`
+	Items            *Schema        `json:"items,omitempty"`
+	Properties       Properties     `json:"properties,omitempty"`
+	Ref              string         `json:"$ref,omitempty"`
+	XAEPResource     *XAEPResource  `json:"x-aep-resource,omitempty"`
+	XAEPFieldNumbers map[int]string `json:"x-aep-field-numbers,omitempty"`
+	ReadOnly         bool           `json:"readOnly,omitempty"`
+	Required         []string       `json:"required,omitempty"`
 }
+
+type Properties map[string]Schema
 
 type Components struct {
 	Schemas map[string]Schema `json:"schemas"`

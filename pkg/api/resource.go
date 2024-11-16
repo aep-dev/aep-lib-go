@@ -10,10 +10,12 @@ type Resource struct {
 	Singular      string
 	Plural        string
 	Parents       []*Resource
+	Children      []*Resource
 	PatternElems  []string // TOO(yft): support multiple patterns
 	Schema        *openapi.Schema
 	GetMethod     *GetMethod
 	ListMethod    *ListMethod
+	ApplyMethod   *ApplyMethod
 	CreateMethod  *CreateMethod
 	UpdateMethod  *UpdateMethod
 	DeleteMethod  *DeleteMethod
@@ -22,6 +24,9 @@ type Resource struct {
 
 type CreateMethod struct {
 	SupportsUserSettableCreate bool
+}
+
+type ApplyMethod struct {
 }
 
 type GetMethod struct {
