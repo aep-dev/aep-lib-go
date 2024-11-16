@@ -45,6 +45,11 @@ func TestToOpenAPI(t *testing.T) {
 	exampleAPI := &API{
 		Name:      "Test API",
 		ServerURL: "https://api.example.com",
+		Schemas: map[string]*openapi.Schema{
+			"account": {
+				Type: "object",
+			},
+		},
 		Resources: map[string]*Resource{
 			"book":      book,
 			"publisher": publisher,
@@ -52,10 +57,11 @@ func TestToOpenAPI(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		api           *API
-		expectedPaths []string
-		wantErr       bool
+		name            string
+		api             *API
+		expectedPaths   []string
+		expectedSchemas []string
+		wantErr         bool
 	}{
 		{
 			name: "Basic resource paths",
@@ -65,6 +71,9 @@ func TestToOpenAPI(t *testing.T) {
 				"/publishers/{publisher}",
 				"/publishers/{publisher}/books",
 				"/publishers/{publisher}/books/{book}",
+			},
+			expectedSchemas: []string{
+				"account",
 			},
 			wantErr: false,
 		},
@@ -99,6 +108,10 @@ func TestToOpenAPI(t *testing.T) {
 				assert.True(t, exists, "Expected schema %s not found", resource.Singular)
 				assert.Equal(t, resource.Schema.Type, schema.Type)
 				assert.Equal(t, resource.Schema.XAEPResource.Singular, resource.Singular)
+			}
+			for _, schema := range tt.expectedSchemas {
+				_, exists := openAPI.Components.Schemas[schema]
+				assert.True(t, exists, "Expected schema %s not found", schema)
 			}
 		})
 	}

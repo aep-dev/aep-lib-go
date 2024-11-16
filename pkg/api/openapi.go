@@ -208,6 +208,9 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		}
 		components.Schemas[r.Singular] = *d
 	}
+	for k, v := range api.Schemas {
+		components.Schemas[k] = *v
+	}
 	openAPI := &openapi.OpenAPI{
 		OpenAPI: "3.1.0",
 		Servers: []openapi.Server{

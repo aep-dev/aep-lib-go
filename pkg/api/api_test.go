@@ -142,6 +142,12 @@ var basicOpenAPI = &openapi.OpenAPI{
 					"name": {Type: "string"},
 				},
 			},
+			"Account": {
+				Type: "object",
+				Properties: map[string]openapi.Schema{
+					"title": {Type: "string"},
+				},
+			},
 		},
 	},
 }
@@ -174,6 +180,14 @@ func TestGetAPI(t *testing.T) {
 				assert.NotNil(t, widget.DeleteMethod, "should have DELETE method")
 			},
 		},
+		{
+			name: "non-resource schemas",
+			api:  basicOpenAPI,
+			validateResult: func(t *testing.T, sd *API) {
+				assert.Contains(t, sd.Schemas, "Account", "should have Account schema")
+			},
+		},
+
 		{
 			name:      "empty openapi with server url override",
 			api:       basicOpenAPI,

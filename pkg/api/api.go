@@ -12,6 +12,7 @@ import (
 type API struct {
 	ServerURL string
 	Name      string
+	Schemas   map[string]*openapi.Schema
 	Resources map[string]*Resource
 }
 
@@ -204,10 +205,20 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 		return nil, fmt.Errorf("no server URL found in openapi, and none was provided")
 	}
 
+	// any schemas that are not a resource are added to the API's schemas
+	schemas := make(map[string]*openapi.Schema)
+	for k, v := range api.Components.Schemas {
+		if _, ok := resourceBySingular[k]; ok {
+			continue
+		}
+		schemas[k] = &v
+	}
+
 	return &API{
 		ServerURL: serverURL,
 		Name:      api.Info.Title,
 		Resources: resourceBySingular,
+		Schemas:   schemas,
 	}, nil
 }
 
