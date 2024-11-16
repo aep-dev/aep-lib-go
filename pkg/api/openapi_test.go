@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
@@ -71,7 +72,7 @@ func TestToOpenAPI(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			openAPI, err := convertToOpenAPI(tt.api)
+			openAPI, err := ConvertToOpenAPI(tt.api)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -86,6 +87,7 @@ func TestToOpenAPI(t *testing.T) {
 			assert.Equal(t, tt.api.ServerURL, openAPI.Servers[0].URL)
 
 			// Verify paths exist
+			fmt.Println(openAPI.Paths)
 			for _, expectedPath := range tt.expectedPaths {
 				_, exists := openAPI.Paths[expectedPath]
 				assert.True(t, exists, "Expected path %s not found", expectedPath)
@@ -97,6 +99,138 @@ func TestToOpenAPI(t *testing.T) {
 				assert.True(t, exists, "Expected schema %s not found", resource.Singular)
 				assert.Equal(t, resource.Schema.Type, schema.Type)
 				assert.Equal(t, resource.Schema.XAEPResource.Singular, resource.Singular)
+			}
+		})
+	}
+}
+
+func TestGenerateParentPatternsWithParams(t *testing.T) {
+	tests := []struct {
+		name           string
+		resource       *Resource
+		wantCollection string
+		wantPathParams *[]PathWithParams
+	}{
+		{
+			name: "with pattern elements",
+			resource: &Resource{
+				PatternElems: []string{"databases", "{database}", "tables", "{table}"},
+				Singular:     "table",
+			},
+			wantCollection: "tables",
+			wantPathParams: &[]PathWithParams{
+				{
+					Pattern: "/databases/{database}",
+					Params: []openapi.Parameter{
+						{
+							In:       "path",
+							Name:     "database",
+							Required: true,
+							Type:     "string",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "without pattern elements",
+			resource: &Resource{
+				Singular: "table",
+				Plural:   "tables",
+				Parents: []*Resource{
+					{
+						Singular: "database",
+						Plural:   "databases",
+					},
+				},
+			},
+			wantCollection: "tables",
+			wantPathParams: &[]PathWithParams{
+				{
+					Pattern: "/databases/{database}",
+					Params: []openapi.Parameter{
+						{
+							In:       "path",
+							Name:     "database",
+							Required: true,
+							Type:     "string",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "without pattern elements, nested parent",
+			resource: &Resource{
+				Singular: "table",
+				Plural:   "tables",
+				Parents: []*Resource{
+					{
+						Singular: "database",
+						Plural:   "databases",
+						Parents: []*Resource{
+							{
+								Singular: "account",
+								Plural:   "accounts",
+							},
+						},
+					},
+				},
+			},
+			wantCollection: "tables",
+			wantPathParams: &[]PathWithParams{
+				{
+					Pattern: "/accounts/{account}/databases/{database}",
+					Params: []openapi.Parameter{
+						{
+							In:       "path",
+							Name:     "account",
+							Required: true,
+							Type:     "string",
+						},
+						{
+							In:       "path",
+							Name:     "database",
+							Required: true,
+							Type:     "string",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCollection, gotPathParams := generateParentPatternsWithParams(tt.resource)
+
+			if gotCollection != tt.wantCollection {
+				t.Errorf("collection = %v, want %v", gotCollection, tt.wantCollection)
+			}
+
+			if len(*gotPathParams) != len(*tt.wantPathParams) {
+				t.Errorf("pathParams length = %v, want %v", len(*gotPathParams), len(*tt.wantPathParams))
+			}
+
+			for i, got := range *gotPathParams {
+				want := (*tt.wantPathParams)[i]
+				if got.Pattern != want.Pattern {
+					t.Errorf("pattern[%d] = %v, want %v", i, got.Pattern, want.Pattern)
+				}
+
+				if len(got.Params) != len(want.Params) {
+					t.Errorf("params[%d] length = %v, want %v", i, len(got.Params), len(want.Params))
+				}
+
+				for j, gotParam := range got.Params {
+					wantParam := want.Params[j]
+					if gotParam.Name != wantParam.Name ||
+						gotParam.In != wantParam.In ||
+						gotParam.Required != wantParam.Required ||
+						gotParam.Type != wantParam.Type {
+						t.Errorf("param[%d][%d] = %+v, want %+v", i, j, gotParam, wantParam)
+					}
+				}
 			}
 		})
 	}

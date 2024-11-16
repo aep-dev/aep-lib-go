@@ -3,12 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
 
-func (api *API) ToOpenAPI() ([]byte, error) {
-	openAPI, err := convertToOpenAPI(api)
+func (api *API) ConvertToOpenAPIBytes() ([]byte, error) {
+	openAPI, err := ConvertToOpenAPI(api)
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +21,7 @@ func (api *API) ToOpenAPI() ([]byte, error) {
 	return jsonData, nil
 }
 
-func convertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
+func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 	paths := map[string]openapi.PathItem{}
 	components := openapi.Components{
 		Schemas: map[string]openapi.Schema{},
@@ -28,7 +29,7 @@ func convertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 	for _, r := range api.Resources {
 		d := r.Schema
 		// if it is a resource, add paths
-		parentPWPS := generateParentPatternsWithParams(r)
+		collection, parentPWPS := generateParentPatternsWithParams(r)
 		// add an empty PathWithParam, if there are no parents.
 		// This will add paths for the simple resource case.
 		if len(*parentPWPS) == 0 {
@@ -39,7 +40,6 @@ func convertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		patterns := []string{}
 		schemaRef := fmt.Sprintf("#/components/schemas/%v", r.Singular)
 		singular := r.Singular
-		collection := CollectionName(r)
 		// declare some commonly used objects, to be used later.
 		bodyParam := openapi.RequestBody{
 			Required: true,
@@ -69,7 +69,7 @@ func convertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		}
 		for _, pwp := range *parentPWPS {
 			resourcePath := fmt.Sprintf("%s/%s/{%s}", pwp.Pattern, collection, singular)
-			patterns = append(patterns, resourcePath)
+			patterns = append(patterns, resourcePath[1:])
 			if r.ListMethod != nil {
 				listPath := fmt.Sprintf("%s/%s", pwp.Pattern, collection)
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
@@ -232,13 +232,43 @@ type PathWithParams struct {
 }
 
 // generate the x-aep-patterns for the parent resources, along with the patterns
-// they need.
+// they need. Return a tuple of the collection name for the resource, and the
+// patterns.
 //
 // This is helpful when you're constructing methods on resources with a parent.
-func generateParentPatternsWithParams(r *Resource) *[]PathWithParams {
-	if len(r.Parents) == 0 {
-		return &[]PathWithParams{}
+//
+// There are two algorithms that are used:
+//
+// 1. if PatternElems are present, then those will be used. This helps
+// handle the situation where the resource structs were retrieved from a parsed
+// OpenAPI definition, where the plural of the parents aren't necessarily clear,
+// or the pattern element naming may not completely match the resource names.
+//
+// 2. Otherwise, we'll use the parent resources, and generate the collection
+// names. This works for the case where the resource hierarchy is generated from
+// scratch. This Algorithm will result in the fully AEP-compliant collection
+// names.
+func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
+	// case 1: pattern elems are present, so we use them.
+	// TODO(yft): support multiple patterns
+	if len(r.PatternElems) > 0 {
+		collection := r.PatternElems[len(r.PatternElems)-2]
+		params := []openapi.Parameter{}
+		for i := 0; i < len(r.PatternElems)-2; i += 2 {
+			pElem := r.PatternElems[i+1]
+			params = append(params, openapi.Parameter{
+				In:       "path",
+				Name:     pElem[1 : len(pElem)-1],
+				Required: true,
+				Type:     "string",
+			})
+		}
+		return collection, &[]PathWithParams{
+			{Pattern: fmt.Sprintf("/%s", strings.Join(r.PatternElems[0:len(r.PatternElems)-2], "/")), Params: params},
+		}
 	}
+	// case 2: no pattern elems, so we need to generate the collection names
+	collection := CollectionName(r)
 	pwps := []PathWithParams{}
 	for _, parent := range r.Parents {
 		singular := parent.Singular
@@ -255,14 +285,15 @@ func generateParentPatternsWithParams(r *Resource) *[]PathWithParams {
 				Params:  []openapi.Parameter{baseParam},
 			})
 		} else {
-			for _, parentPWP := range *generateParentPatternsWithParams(parent) {
+			_, parentPWPS := generateParentPatternsWithParams(parent)
+			for _, parentPWP := range *parentPWPS {
 				params := append(parentPWP.Params, baseParam)
 				pattern := fmt.Sprintf("%s%s", parentPWP.Pattern, basePattern)
 				pwps = append(pwps, PathWithParams{Pattern: pattern, Params: params})
 			}
 		}
 	}
-	return &pwps
+	return collection, &pwps
 }
 
 func addMethodToPath(paths map[string]openapi.PathItem, path, method string, methodInfo openapi.Operation) {

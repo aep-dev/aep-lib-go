@@ -146,7 +146,7 @@ type MediaType struct {
 }
 
 type Schema struct {
-	Type             string         `json:"type"`
+	Type             string         `json:"type,omitempty"`
 	Format           string         `json:"format,omitempty"`
 	Items            *Schema        `json:"items,omitempty"`
 	Properties       Properties     `json:"properties,omitempty"`
