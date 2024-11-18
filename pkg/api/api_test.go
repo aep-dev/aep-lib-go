@@ -10,7 +10,7 @@ import (
 var basicOpenAPI = &openapi.OpenAPI{
 	OpenAPI: "3.1.0",
 	Servers: []openapi.Server{{URL: "https://api.example.com"}},
-	Paths: map[string]openapi.PathItem{
+	Paths: map[string]*openapi.PathItem{
 		"/widgets": {
 			Get: &openapi.Operation{
 				Responses: map[string]openapi.Response{
@@ -200,7 +200,7 @@ func TestGetAPI(t *testing.T) {
 			name: "resource with x-aep-resource annotation",
 			api: &openapi.OpenAPI{
 				OpenAPI: "3.1.0",
-				Paths: map[string]openapi.PathItem{
+				Paths: map[string]*openapi.PathItem{
 					"/widgets/{widget}": {
 						Get: &openapi.Operation{
 							Responses: map[string]openapi.Response{
@@ -255,7 +255,7 @@ func TestGetAPI(t *testing.T) {
 			api: &openapi.OpenAPI{
 				OpenAPI: "3.1.0",
 				Servers: []openapi.Server{{URL: "https://api.example.com"}},
-				Paths: map[string]openapi.PathItem{
+				Paths: map[string]*openapi.PathItem{
 					"/widgets": {
 						Post: &openapi.Operation{
 							Parameters: []openapi.Parameter{
@@ -295,7 +295,7 @@ func TestGetAPI(t *testing.T) {
 			api: &openapi.OpenAPI{
 				Swagger: "2.0",
 				Servers: []openapi.Server{{URL: "https://api.example.com"}},
-				Paths: map[string]openapi.PathItem{
+				Paths: map[string]*openapi.PathItem{
 					"/widgets/{widget}": {
 						Get: &openapi.Operation{
 							Responses: map[string]openapi.Response{

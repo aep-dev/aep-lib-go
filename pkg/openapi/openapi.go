@@ -19,12 +19,12 @@ const (
 
 type OpenAPI struct {
 	// oas 2.0 has swagger in the root.k
-	Swagger    string              `json:"swagger,omitempty"`
-	OpenAPI    string              `json:"openapi,omitempty"`
-	Servers    []Server            `json:"servers,omitempty"`
-	Info       Info                `json:"info"`
-	Paths      map[string]PathItem `json:"paths"`
-	Components Components          `json:"components,omitempty"`
+	Swagger    string               `json:"swagger,omitempty"`
+	OpenAPI    string               `json:"openapi,omitempty"`
+	Servers    []Server             `json:"servers,omitempty"`
+	Info       Info                 `json:"info"`
+	Paths      map[string]*PathItem `json:"paths"`
+	Components Components           `json:"components,omitempty"`
 	// oas 2.0 has definitions in the root.
 	Definitions map[string]Schema `json:"definitions,omitempty"`
 }

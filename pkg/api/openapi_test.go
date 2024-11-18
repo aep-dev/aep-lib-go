@@ -55,13 +55,13 @@ func TestToOpenAPI(t *testing.T) {
 			"publisher": publisher,
 		},
 	}
-
 	tests := []struct {
-		name            string
-		api             *API
-		expectedPaths   []string
-		expectedSchemas []string
-		wantErr         bool
+		name               string
+		api                *API
+		expectedPaths      []string
+		expectedSchemas    []string
+		expectedOperations map[string]openapi.PathItem
+		wantErr            bool
 	}{
 		{
 			name: "Basic resource paths",
@@ -74,6 +74,24 @@ func TestToOpenAPI(t *testing.T) {
 			},
 			expectedSchemas: []string{
 				"account",
+			},
+			expectedOperations: map[string]openapi.PathItem{
+				"/publishers": {
+					Get:  &openapi.Operation{},
+					Post: &openapi.Operation{},
+				},
+				"/publishers/{publisher}": {
+					Get: &openapi.Operation{},
+				},
+				"/publishers/{publisher}/books": {
+					Get:  &openapi.Operation{},
+					Post: &openapi.Operation{},
+				},
+				"/publishers/{publisher}/books/{book}": {
+					Get:    &openapi.Operation{},
+					Put:    &openapi.Operation{},
+					Delete: &openapi.Operation{},
+				},
 			},
 			wantErr: false,
 		},
@@ -113,6 +131,27 @@ func TestToOpenAPI(t *testing.T) {
 				_, exists := openAPI.Components.Schemas[schema]
 				assert.True(t, exists, "Expected schema %s not found", schema)
 			}
+
+			// Verify operations exist
+			for path, operations := range tt.expectedOperations {
+				pathItem, exists := openAPI.Paths[path]
+				assert.True(t, exists, "Expected path %s not found", path)
+				if operations.Get != nil {
+					assert.NotNil(t, pathItem.Get, "expected get operation for path %s", path)
+				}
+				if operations.Patch != nil {
+					assert.NotNil(t, pathItem.Patch, "expected patch operation for path %s", path)
+				}
+				if operations.Post != nil {
+					assert.NotNil(t, pathItem.Post, "expected post operation for path %s", path)
+				}
+				if operations.Put != nil {
+					assert.NotNil(t, operations.Put, "expected put operation for path %s", path)
+				}
+				if operations.Delete != nil {
+					assert.NotNil(t, pathItem.Delete, "expected delete operation for path %s", path)
+				}
+			}
 		})
 	}
 }
@@ -130,7 +169,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 				PatternElems: []string{"databases", "{database}", "tables", "{table}"},
 				Singular:     "table",
 			},
-			wantCollection: "tables",
+			wantCollection: "/tables",
 			wantPathParams: &[]PathWithParams{
 				{
 					Pattern: "/databases/{database}",
@@ -146,6 +185,21 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 			},
 		},
 		{
+			name: "with pattern elements no nesting",
+			resource: &Resource{
+				PatternElems: []string{"databases", "{database}"},
+				Singular:     "database",
+			},
+			wantCollection: "/databases",
+			wantPathParams: &[]PathWithParams{
+				{
+					Pattern: "",
+					Params:  []openapi.Parameter{},
+				},
+			},
+		},
+
+		{
 			name: "without pattern elements",
 			resource: &Resource{
 				Singular: "table",
@@ -157,7 +211,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 					},
 				},
 			},
-			wantCollection: "tables",
+			wantCollection: "/tables",
 			wantPathParams: &[]PathWithParams{
 				{
 					Pattern: "/databases/{database}",
@@ -190,7 +244,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 					},
 				},
 			},
-			wantCollection: "tables",
+			wantCollection: "/tables",
 			wantPathParams: &[]PathWithParams{
 				{
 					Pattern: "/accounts/{account}/databases/{database}",

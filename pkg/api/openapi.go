@@ -22,7 +22,7 @@ func (api *API) ConvertToOpenAPIBytes() ([]byte, error) {
 }
 
 func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
-	paths := map[string]openapi.PathItem{}
+	paths := map[string]*openapi.PathItem{}
 	components := openapi.Components{
 		Schemas: map[string]openapi.Schema{},
 	}
@@ -68,10 +68,10 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			},
 		}
 		for _, pwp := range *parentPWPS {
-			resourcePath := fmt.Sprintf("%s/%s/{%s}", pwp.Pattern, collection, singular)
+			resourcePath := fmt.Sprintf("%s%s/{%s}", pwp.Pattern, collection, singular)
 			patterns = append(patterns, resourcePath[1:])
 			if r.ListMethod != nil {
-				listPath := fmt.Sprintf("%s/%s", pwp.Pattern, collection)
+				listPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
 					Parameters: append(pwp.Params,
 						openapi.Parameter{
@@ -110,7 +110,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				})
 			}
 			if r.CreateMethod != nil {
-				createPath := fmt.Sprintf("%s/%s", pwp.Pattern, collection)
+				createPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				params := pwp.Params
 				if !r.CreateMethod.SupportsUserSettableCreate {
 					params = append(params, openapi.Parameter{
@@ -255,7 +255,7 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 	// case 1: pattern elems are present, so we use them.
 	// TODO(yft): support multiple patterns
 	if len(r.PatternElems) > 0 {
-		collection := r.PatternElems[len(r.PatternElems)-2]
+		collection := fmt.Sprintf("/%s", r.PatternElems[len(r.PatternElems)-2])
 		params := []openapi.Parameter{}
 		for i := 0; i < len(r.PatternElems)-2; i += 2 {
 			pElem := r.PatternElems[i+1]
@@ -266,12 +266,16 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 				Type:     "string",
 			})
 		}
+		pattern := strings.Join(r.PatternElems[0:len(r.PatternElems)-2], "/")
+		if pattern != "" {
+			pattern = fmt.Sprintf("/%s", pattern)
+		}
 		return collection, &[]PathWithParams{
-			{Pattern: fmt.Sprintf("/%s", strings.Join(r.PatternElems[0:len(r.PatternElems)-2], "/")), Params: params},
+			{Pattern: pattern, Params: params},
 		}
 	}
 	// case 2: no pattern elems, so we need to generate the collection names
-	collection := CollectionName(r)
+	collection := fmt.Sprintf("/%s", CollectionName(r))
 	pwps := []PathWithParams{}
 	for _, parent := range r.Parents {
 		singular := parent.Singular
@@ -299,10 +303,10 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 	return collection, &pwps
 }
 
-func addMethodToPath(paths map[string]openapi.PathItem, path, method string, methodInfo openapi.Operation) {
+func addMethodToPath(paths map[string]*openapi.PathItem, path, method string, methodInfo openapi.Operation) {
 	methods, ok := paths[path]
 	if !ok {
-		methods = openapi.PathItem{}
+		methods = &openapi.PathItem{}
 		paths[path] = methods
 	}
 	switch method {
