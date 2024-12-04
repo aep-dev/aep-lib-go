@@ -36,6 +36,7 @@ type UpdateMethod struct {
 }
 
 type ListMethod struct {
+	HasUnreachableResources bool
 }
 
 type DeleteMethod struct {

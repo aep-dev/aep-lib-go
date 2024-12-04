@@ -72,17 +72,33 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			patterns = append(patterns, resourcePath[1:])
 			if r.ListMethod != nil {
 				listPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
+				responseProperties := map[string]openapi.Schema{
+					"results": {
+						Type: "array",
+						Items: &openapi.Schema{
+							Ref: schemaRef,
+						},
+					},
+				}
+				if r.ListMethod.HasUnreachableResources {
+					responseProperties[FIELD_UNREACHABLE_NAME] = openapi.Schema{
+						Type: "array",
+						Items: &openapi.Schema{
+							Type: "string",
+						},
+					}
+				}
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
 					Parameters: append(pwp.Params,
 						openapi.Parameter{
 							In:       "query",
-							Name:     "max_page_size",
+							Name:     FIELD_MAX_PAGE_SIZE_NAME,
 							Required: true,
 							Type:     "integer",
 						},
 						openapi.Parameter{
 							In:       "query",
-							Name:     "page_token",
+							Name:     FIELD_PAGE_TOKEN_NAME,
 							Required: true,
 							Type:     "string",
 						},
@@ -93,15 +109,8 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: &openapi.Schema{
-										Type: "object",
-										Properties: map[string]openapi.Schema{
-											"results": {
-												Type: "array",
-												Items: &openapi.Schema{
-													Ref: schemaRef,
-												},
-											},
-										},
+										Type:       "object",
+										Properties: responseProperties,
 									},
 								},
 							},
@@ -150,7 +159,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				if len(r.Children) > 0 {
 					params = append(params, openapi.Parameter{
 						In:       "query",
-						Name:     "force",
+						Name:     FIELD_FORCE_NAME,
 						Required: false,
 						Type:     "boolean",
 					})

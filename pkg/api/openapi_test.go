@@ -35,7 +35,9 @@ func TestToOpenAPI(t *testing.T) {
 				"id":   {Type: "string"},
 			},
 		},
-		ListMethod:   &ListMethod{},
+		ListMethod: &ListMethod{
+			HasUnreachableResources: true,
+		},
 		GetMethod:    &GetMethod{},
 		CreateMethod: &CreateMethod{},
 		UpdateMethod: &UpdateMethod{},
@@ -56,12 +58,13 @@ func TestToOpenAPI(t *testing.T) {
 		},
 	}
 	tests := []struct {
-		name               string
-		api                *API
-		expectedPaths      []string
-		expectedSchemas    []string
-		expectedOperations map[string]openapi.PathItem
-		wantErr            bool
+		name                string
+		api                 *API
+		expectedPaths       []string
+		expectedSchemas     []string
+		expectedOperations  map[string]openapi.PathItem
+		expectedListSchemas map[string]*openapi.Schema
+		wantErr             bool
 	}{
 		{
 			name: "Basic resource paths",
@@ -91,6 +94,19 @@ func TestToOpenAPI(t *testing.T) {
 					Get:    &openapi.Operation{},
 					Put:    &openapi.Operation{},
 					Delete: &openapi.Operation{},
+				},
+			},
+			expectedListSchemas: map[string]*openapi.Schema{
+				"/publishers/{publisher}/books": {
+					Type: "object",
+					Properties: map[string]openapi.Schema{
+						"unreachable": {
+							Type: "array",
+							Items: &openapi.Schema{
+								Type: "string",
+							},
+						},
+					},
 				},
 			},
 			wantErr: false,
@@ -150,6 +166,23 @@ func TestToOpenAPI(t *testing.T) {
 				}
 				if operations.Delete != nil {
 					assert.NotNil(t, pathItem.Delete, "expected delete operation for path %s", path)
+				}
+			}
+
+			// Add new verification for List response schemas
+			for path, expectedSchema := range tt.expectedListSchemas {
+				pathItem, exists := openAPI.Paths[path]
+				assert.True(t, exists, "Expected path %s not found", path)
+
+				// Verify List operation response schema
+				listResponse := pathItem.Get.Responses["200"]
+				if expectedSchema != nil {
+					assert.NotNil(t, listResponse.Content["application/json"].Schema.Properties["unreachable"],
+						"Expected unreachable array in List response schema for path %s", path)
+					s := listResponse.Content["application/json"].Schema
+					for name, prop := range expectedSchema.Properties {
+						assert.Equal(t, prop, s.Properties[name])
+					}
 				}
 			}
 		})
