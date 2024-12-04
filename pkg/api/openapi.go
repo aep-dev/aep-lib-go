@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aep-dev/aep-lib-go/pkg/constants"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
 
@@ -81,7 +82,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					},
 				}
 				if r.ListMethod.HasUnreachableResources {
-					responseProperties[FIELD_UNREACHABLE_NAME] = openapi.Schema{
+					responseProperties[constants.FIELD_UNREACHABLE_NAME] = openapi.Schema{
 						Type: "array",
 						Items: &openapi.Schema{
 							Type: "string",
@@ -92,13 +93,13 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					Parameters: append(pwp.Params,
 						openapi.Parameter{
 							In:       "query",
-							Name:     FIELD_MAX_PAGE_SIZE_NAME,
+							Name:     constants.FIELD_MAX_PAGE_SIZE_NAME,
 							Required: true,
 							Type:     "integer",
 						},
 						openapi.Parameter{
 							In:       "query",
-							Name:     FIELD_PAGE_TOKEN_NAME,
+							Name:     constants.FIELD_PAGE_TOKEN_NAME,
 							Required: true,
 							Type:     "string",
 						},
@@ -159,7 +160,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				if len(r.Children) > 0 {
 					params = append(params, openapi.Parameter{
 						In:       "query",
-						Name:     FIELD_FORCE_NAME,
+						Name:     constants.FIELD_FORCE_NAME,
 						Required: false,
 						Type:     "boolean",
 					})

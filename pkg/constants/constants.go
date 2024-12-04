@@ -1,4 +1,4 @@
-package api
+package constants
 
 const (
 	FIELD_FORCE_NAME             = "force"
