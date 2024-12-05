@@ -134,7 +134,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					params = append(params, openapi.Parameter{
 						In:       "query",
 						Name:     "id",
-						Required: true,
+						Required: false,
 						Type:     "string",
 					})
 				}
@@ -303,7 +303,9 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 				In:       "path",
 				Name:     pElem[1 : len(pElem)-1],
 				Required: true,
-				Type:     "string",
+				Schema: &openapi.Schema{
+					Type: "string",
+				},
 			})
 		}
 		pattern := strings.Join(r.PatternElems[0:len(r.PatternElems)-2], "/")
@@ -324,7 +326,9 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 			In:       "path",
 			Name:     singular,
 			Required: true,
-			Type:     "string",
+			Schema: &openapi.Schema{
+				Type: "string",
+			},
 		}
 		if len(parent.Parents) == 0 {
 			pwps = append(pwps, PathWithParams{
