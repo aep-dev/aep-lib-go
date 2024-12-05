@@ -56,7 +56,9 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			In:       "path",
 			Name:     singular,
 			Required: true,
-			Type:     "string",
+			Schema: &openapi.Schema{
+				Type: "string",
+			},
 		}
 		resourceResponse := openapi.Response{
 			Description: "Successful response",
@@ -90,18 +92,24 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					}
 				}
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
+					OperationID: r.Singular + ".list",
+					Description: fmt.Sprintf("List method for %s", r.Singular),
 					Parameters: append(pwp.Params,
 						openapi.Parameter{
 							In:       "query",
 							Name:     constants.FIELD_MAX_PAGE_SIZE_NAME,
-							Required: true,
-							Type:     "integer",
+							Required: false,
+							Schema: &openapi.Schema{
+								Type: "integer",
+							},
 						},
 						openapi.Parameter{
 							In:       "query",
 							Name:     constants.FIELD_PAGE_TOKEN_NAME,
-							Required: true,
-							Type:     "string",
+							Required: false,
+							Schema: &openapi.Schema{
+								Type: "string",
+							},
 						},
 					),
 					Responses: map[string]openapi.Response{
@@ -131,6 +139,8 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					})
 				}
 				addMethodToPath(paths, createPath, "post", openapi.Operation{
+					OperationID: r.Singular + ".create",
+					Description: fmt.Sprintf("Create method for %s", r.Singular),
 					Parameters:  params,
 					RequestBody: &bodyParam,
 					Responses: map[string]openapi.Response{
@@ -140,7 +150,9 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.GetMethod != nil {
 				addMethodToPath(paths, resourcePath, "get", openapi.Operation{
-					Parameters: append(pwp.Params, idParam),
+					OperationID: r.Singular + ".get",
+					Description: fmt.Sprintf("Get method for %s", r.Singular),
+					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
 						"200": resourceResponse,
 					},
@@ -148,6 +160,8 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.UpdateMethod != nil {
 				addMethodToPath(paths, resourcePath, "patch", openapi.Operation{
+					OperationID: r.Singular + ".update",
+					Description: fmt.Sprintf("Update method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					RequestBody: &bodyParam,
 					Responses: map[string]openapi.Response{
@@ -162,18 +176,31 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						In:       "query",
 						Name:     constants.FIELD_FORCE_NAME,
 						Required: false,
-						Type:     "boolean",
+						Schema: &openapi.Schema{
+							Type: "boolean",
+						},
 					})
 				}
 				addMethodToPath(paths, resourcePath, "delete", openapi.Operation{
-					Parameters: params,
+					OperationID: r.Singular + ".delete",
+					Description: fmt.Sprintf("Delete method for %s", r.Singular),
+					Parameters:  params,
 					Responses: map[string]openapi.Response{
-						"200": {},
+						"204": {
+							Description: "Successful response",
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{},
+								},
+							},
+						},
 					},
 				})
 			}
 			if r.ApplyMethod != nil {
 				addMethodToPath(paths, resourcePath, "put", openapi.Operation{
+					OperationID: r.Singular + ".apply",
+					Description: fmt.Sprintf("Apply method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					RequestBody: &bodyParam,
 					Responses: map[string]openapi.Response{
@@ -188,7 +215,9 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				cmPath := fmt.Sprintf("%s:%s", resourcePath, custom.Name)
 				methodInfo := openapi.Operation{
-					Parameters: append(pwp.Params, idParam),
+					OperationID: r.Singular + ":" + custom.Name,
+					Description: fmt.Sprintf("Custom method %s for %s", custom.Name, r.Singular),
+					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
 						"200": resourceResponse,
 					},
@@ -227,8 +256,9 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			{URL: api.ServerURL},
 		},
 		Info: openapi.Info{
-			Title:   api.Name,
-			Version: "version not set",
+			Title:       api.Name,
+			Version:     "version not set",
+			Description: "An API for " + api.Name,
 		},
 		Paths:      paths,
 		Components: components,
