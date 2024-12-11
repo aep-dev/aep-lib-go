@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aep-dev/aep-lib-go/pkg/cases"
 	"github.com/aep-dev/aep-lib-go/pkg/constants"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
@@ -92,7 +93,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					}
 				}
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
-					OperationID: r.Singular + ".list",
+					OperationID: fmt.Sprintf("List%s", cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("List method for %s", r.Singular),
 					Parameters: append(pwp.Params,
 						openapi.Parameter{
@@ -139,7 +140,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					})
 				}
 				addMethodToPath(paths, createPath, "post", openapi.Operation{
-					OperationID: r.Singular + ".create",
+					OperationID: fmt.Sprintf("Create%s", cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("Create method for %s", r.Singular),
 					Parameters:  params,
 					RequestBody: &bodyParam,
@@ -150,7 +151,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.GetMethod != nil {
 				addMethodToPath(paths, resourcePath, "get", openapi.Operation{
-					OperationID: r.Singular + ".get",
+					OperationID: fmt.Sprintf("Get%s", cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("Get method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
@@ -160,7 +161,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.UpdateMethod != nil {
 				addMethodToPath(paths, resourcePath, "patch", openapi.Operation{
-					OperationID: r.Singular + ".update",
+					OperationID: fmt.Sprintf("Update%s", cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("Update method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					RequestBody: &bodyParam,
@@ -182,7 +183,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					})
 				}
 				addMethodToPath(paths, resourcePath, "delete", openapi.Operation{
-					OperationID: r.Singular + ".delete",
+					OperationID: fmt.Sprintf("Delete%s", cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("Delete method for %s", r.Singular),
 					Parameters:  params,
 					Responses: map[string]openapi.Response{
@@ -199,7 +200,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.ApplyMethod != nil {
 				addMethodToPath(paths, resourcePath, "put", openapi.Operation{
-					OperationID: r.Singular + ".apply",
+					OperationID: fmt.Sprintf("Apply%s", cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("Apply method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					RequestBody: &bodyParam,
@@ -215,7 +216,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				cmPath := fmt.Sprintf("%s:%s", resourcePath, custom.Name)
 				methodInfo := openapi.Operation{
-					OperationID: r.Singular + ":" + custom.Name,
+					OperationID: fmt.Sprintf(":%s%s", cases.UpperFirst(custom.Name), cases.UpperFirst(r.Singular)),
 					Description: fmt.Sprintf("Custom method %s for %s", custom.Name, r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{

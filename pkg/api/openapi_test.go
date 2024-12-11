@@ -42,6 +42,22 @@ func TestToOpenAPI(t *testing.T) {
 		CreateMethod: &CreateMethod{},
 		UpdateMethod: &UpdateMethod{},
 		DeleteMethod: &DeleteMethod{},
+		CustomMethods: []*CustomMethod{
+			{
+				Name:   "archive",
+				Method: "POST",
+				Request: &openapi.Schema{
+					Type:       "object",
+					Properties: map[string]openapi.Schema{},
+				},
+				Response: &openapi.Schema{
+					Type: "object",
+					Properties: map[string]openapi.Schema{
+						"archived": {Type: "boolean"},
+					},
+				},
+			},
+		},
 	}
 	publisher.Children = append(publisher.Children, book)
 	exampleAPI := &API{
@@ -80,20 +96,63 @@ func TestToOpenAPI(t *testing.T) {
 			},
 			expectedOperations: map[string]openapi.PathItem{
 				"/publishers": {
-					Get:  &openapi.Operation{},
-					Post: &openapi.Operation{},
+					Get: &openapi.Operation{
+						OperationID: "ListPublisher",
+					},
+					Post: &openapi.Operation{
+						OperationID: "CreatePublisher",
+					},
 				},
 				"/publishers/{publisher}": {
-					Get: &openapi.Operation{},
+					Get: &openapi.Operation{
+						OperationID: "GetPublisher",
+					},
 				},
 				"/publishers/{publisher}/books": {
-					Get:  &openapi.Operation{},
-					Post: &openapi.Operation{},
+					Get: &openapi.Operation{
+						OperationID: "ListBook",
+					},
+					Post: &openapi.Operation{
+						OperationID: "CreateBook",
+					},
 				},
 				"/publishers/{publisher}/books/{book}": {
-					Get:    &openapi.Operation{},
-					Put:    &openapi.Operation{},
-					Delete: &openapi.Operation{},
+					Get: &openapi.Operation{
+						OperationID: "GetBook",
+					},
+					Patch: &openapi.Operation{
+						OperationID: "UpdateBook",
+					},
+					Delete: &openapi.Operation{
+						OperationID: "DeleteBook",
+					},
+				},
+				"/publishers/{publisher}/books/{book}:archive": {
+					Post: &openapi.Operation{
+						OperationID: ":ArchiveBook",
+						RequestBody: &openapi.RequestBody{
+							Required: true,
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{},
+								},
+							},
+						},
+						Responses: map[string]openapi.Response{
+							"200": {
+								Content: map[string]openapi.MediaType{
+									"application/json": {
+										Schema: &openapi.Schema{
+											Type: "object",
+											Properties: map[string]openapi.Schema{
+												"archived": {Type: "boolean"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 			expectedListSchemas: map[string]*openapi.Schema{
@@ -148,24 +207,44 @@ func TestToOpenAPI(t *testing.T) {
 				assert.True(t, exists, "Expected schema %s not found", schema)
 			}
 
-			// Verify operations exist
+			// Verify operations exist and have correct operationIds
 			for path, operations := range tt.expectedOperations {
 				pathItem, exists := openAPI.Paths[path]
 				assert.True(t, exists, "Expected path %s not found", path)
 				if operations.Get != nil {
 					assert.NotNil(t, pathItem.Get, "expected get operation for path %s", path)
+					if operations.Get.OperationID != "" {
+						assert.Equal(t, operations.Get.OperationID, pathItem.Get.OperationID,
+							"expected matching operationId for GET %s", path)
+					}
 				}
 				if operations.Patch != nil {
 					assert.NotNil(t, pathItem.Patch, "expected patch operation for path %s", path)
+					if operations.Patch.OperationID != "" {
+						assert.Equal(t, operations.Patch.OperationID, pathItem.Patch.OperationID,
+							"expected matching operationId for PATCH %s", path)
+					}
 				}
 				if operations.Post != nil {
 					assert.NotNil(t, pathItem.Post, "expected post operation for path %s", path)
+					if operations.Post.OperationID != "" {
+						assert.Equal(t, operations.Post.OperationID, pathItem.Post.OperationID,
+							"expected matching operationId for POST %s", path)
+					}
 				}
 				if operations.Put != nil {
-					assert.NotNil(t, operations.Put, "expected put operation for path %s", path)
+					assert.NotNil(t, pathItem.Put, "expected put operation for path %s", path)
+					if operations.Put.OperationID != "" {
+						assert.Equal(t, operations.Put.OperationID, pathItem.Put.OperationID,
+							"expected matching operationId for PUT %s", path)
+					}
 				}
 				if operations.Delete != nil {
 					assert.NotNil(t, pathItem.Delete, "expected delete operation for path %s", path)
+					if operations.Delete.OperationID != "" {
+						assert.Equal(t, operations.Delete.OperationID, pathItem.Delete.OperationID,
+							"expected matching operationId for DELETE %s", path)
+					}
 				}
 			}
 
