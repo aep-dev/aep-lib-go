@@ -60,6 +60,20 @@ func TestToOpenAPI(t *testing.T) {
 		},
 	}
 	publisher.Children = append(publisher.Children, book)
+	bookEdition := &Resource{
+		Singular: "book-edition",
+		Plural:   "book-editions",
+		Parents:  []*Resource{book},
+		Schema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]openapi.Schema{
+				"date": {Type: "string"},
+			},
+		},
+		ListMethod: &ListMethod{},
+		GetMethod:  &GetMethod{},
+	}
+	book.Children = append(book.Children, bookEdition)
 	exampleAPI := &API{
 		Name:      "Test API",
 		ServerURL: "https://api.example.com",
@@ -69,8 +83,9 @@ func TestToOpenAPI(t *testing.T) {
 			},
 		},
 		Resources: map[string]*Resource{
-			"book":      book,
-			"publisher": publisher,
+			"book":         book,
+			"book-edition": bookEdition,
+			"publisher":    publisher,
 		},
 	}
 	tests := []struct {
@@ -169,6 +184,31 @@ func TestToOpenAPI(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "book edition",
+			api:  exampleAPI,
+			expectedPaths: []string{
+				"/publishers/{publisher}/books/{book}/editions",
+				"/publishers/{publisher}/books/{book}/editions/{book-edition}",
+			},
+			expectedSchemas: []string{
+				"account",
+			},
+			expectedOperations: map[string]openapi.PathItem{
+				"/publishers/{publisher}/books/{book}/editions": {
+					Get: &openapi.Operation{
+						OperationID: "ListBookEdition",
+					},
+				},
+				"/publishers/{publisher}/books/{book}/editions/{book-edition}": {
+					Get: &openapi.Operation{
+						OperationID: "GetBookEdition",
+					},
+				},
+			},
+			expectedListSchemas: map[string]*openapi.Schema{},
+			wantErr:             false,
 		},
 	}
 

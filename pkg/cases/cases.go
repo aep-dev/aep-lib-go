@@ -50,6 +50,10 @@ func KebabToCamelCase(s string) string {
 	return strings.Join(parts, "")
 }
 
+func KebabToPascalCase(s string) string {
+	return UpperFirst(KebabToCamelCase(s))
+}
+
 func KebabToSnakeCase(s string) string {
 	return strings.ReplaceAll(s, "-", "_")
 }
