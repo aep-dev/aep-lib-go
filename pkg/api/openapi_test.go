@@ -330,7 +330,9 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							In:       "path",
 							Name:     "database",
 							Required: true,
-							Type:     "string",
+							Schema: &openapi.Schema{
+								Type: "string",
+							},
 						},
 					},
 				},
@@ -372,7 +374,9 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							In:       "path",
 							Name:     "database",
 							Required: true,
-							Type:     "string",
+							Schema: &openapi.Schema{
+								Type: "string",
+							},
 						},
 					},
 				},
@@ -405,13 +409,17 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							In:       "path",
 							Name:     "account",
 							Required: true,
-							Type:     "string",
+							Schema: &openapi.Schema{
+								Type: "string",
+							},
 						},
 						{
 							In:       "path",
 							Name:     "database",
 							Required: true,
-							Type:     "string",
+							Schema: &openapi.Schema{
+								Type: "string",
+							},
 						},
 					},
 				},
@@ -446,7 +454,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 					if gotParam.Name != wantParam.Name ||
 						gotParam.In != wantParam.In ||
 						gotParam.Required != wantParam.Required ||
-						gotParam.Type != wantParam.Type {
+						gotParam.Schema.Type != wantParam.Schema.Type {
 						t.Errorf("param[%d][%d] = %+v, want %+v", i, j, gotParam, wantParam)
 					}
 				}
