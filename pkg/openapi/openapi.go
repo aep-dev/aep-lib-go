@@ -109,32 +109,32 @@ type PathItem struct {
 }
 
 type Operation struct {
-	Summary     string              `json:"summary"`
-	Description string              `json:"description"`
-	OperationID string              `json:"operationId"`
-	Parameters  []Parameter         `json:"parameters"`
-	Responses   map[string]Response `json:"responses"`
+	Summary     string              `json:"summary,omitempty"`
+	Description string              `json:"description,omitempty"`
+	OperationID string              `json:"operationId,omitempty"`
+	Parameters  []Parameter         `json:"parameters,omitempty"`
+	Responses   map[string]Response `json:"responses,omitempty"`
 	RequestBody *RequestBody        `json:"requestBody,omitempty"`
 }
 
 type Parameter struct {
-	Name        string  `json:"name"`
-	In          string  `json:"in"`
-	Description string  `json:"description"`
-	Required    bool    `json:"required"`
+	Name        string  `json:"name,omitempty"`
+	In          string  `json:"in,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Required    bool    `json:"required,omitempty"`
 	Schema      *Schema `json:"schema,omitempty"`
 	Type        string  `json:"type,omitempty"`
 }
 
 type Response struct {
-	Description string               `json:"description"`
-	Content     map[string]MediaType `json:"content"`
+	Description string               `json:"description,omitempty"`
+	Content     map[string]MediaType `json:"content,omitempty"`
 	// oas 2.0 has the schema in the response.
 	Schema *Schema `json:"schema,omitempty"`
 }
 
 type RequestBody struct {
-	Description string               `json:"description"`
+	Description string               `json:"description,omitempty"`
 	Content     map[string]MediaType `json:"content"`
 	Required    bool                 `json:"required"`
 	// oas 2.0 has the schema in the request body.
