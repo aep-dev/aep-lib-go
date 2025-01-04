@@ -330,6 +330,9 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 			Schema: &openapi.Schema{
 				Type: "string",
 			},
+			XAEPResourceRef: &openapi.XAEPResourceRef{
+				Resource: singular,
+			},
 		}
 		if len(parent.Parents) == 0 {
 			pwps = append(pwps, PathWithParams{

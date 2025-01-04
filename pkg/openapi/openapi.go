@@ -118,12 +118,17 @@ type Operation struct {
 }
 
 type Parameter struct {
-	Name        string  `json:"name,omitempty"`
-	In          string  `json:"in,omitempty"`
-	Description string  `json:"description,omitempty"`
-	Required    bool    `json:"required,omitempty"`
-	Schema      *Schema `json:"schema,omitempty"`
-	Type        string  `json:"type,omitempty"`
+	Name            string           `json:"name,omitempty"`
+	In              string           `json:"in,omitempty"`
+	Description     string           `json:"description,omitempty"`
+	Required        bool             `json:"required,omitempty"`
+	Schema          *Schema          `json:"schema,omitempty"`
+	Type            string           `json:"type,omitempty"`
+	XAEPResourceRef *XAEPResourceRef `json:"x-aep-resource-reference,omitempty"`
+}
+
+type XAEPResourceRef struct {
+	Resource string `json:"resource,omitempty"`
 }
 
 type Response struct {
