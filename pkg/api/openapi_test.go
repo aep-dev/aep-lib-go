@@ -333,6 +333,9 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							Schema: &openapi.Schema{
 								Type: "string",
 							},
+							XAEPResourceRef: &openapi.XAEPResourceRef{
+								Resource: "database",
+							},
 						},
 					},
 				},
@@ -377,6 +380,9 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							Schema: &openapi.Schema{
 								Type: "string",
 							},
+							XAEPResourceRef: &openapi.XAEPResourceRef{
+								Resource: "database",
+							},
 						},
 					},
 				},
@@ -412,6 +418,9 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							Schema: &openapi.Schema{
 								Type: "string",
 							},
+							XAEPResourceRef: &openapi.XAEPResourceRef{
+								Resource: "account",
+							},
 						},
 						{
 							In:       "path",
@@ -419,6 +428,9 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 							Required: true,
 							Schema: &openapi.Schema{
 								Type: "string",
+							},
+							XAEPResourceRef: &openapi.XAEPResourceRef{
+								Resource: "database",
 							},
 						},
 					},
