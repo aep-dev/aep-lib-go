@@ -92,27 +92,39 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					}
 				}
+				params := append(pwp.Params,
+					openapi.Parameter{
+						In:       "query",
+						Name:     constants.FIELD_MAX_PAGE_SIZE_NAME,
+						Required: false,
+						Schema: &openapi.Schema{
+							Type: "integer",
+						},
+					},
+					openapi.Parameter{
+						In:       "query",
+						Name:     constants.FIELD_PAGE_TOKEN_NAME,
+						Required: false,
+						Schema: &openapi.Schema{
+							Type: "string",
+						},
+					},
+				)
+
+				if r.ListMethod.SupportsSkip {
+					params = append(params, openapi.Parameter{
+						In:       "query",
+						Name:     constants.FIELD_SKIP_NAME,
+						Required: false,
+						Schema: &openapi.Schema{
+							Type: "integer",
+						},
+					})
+				}
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
 					OperationID: fmt.Sprintf("List%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("List method for %s", r.Singular),
-					Parameters: append(pwp.Params,
-						openapi.Parameter{
-							In:       "query",
-							Name:     constants.FIELD_MAX_PAGE_SIZE_NAME,
-							Required: false,
-							Schema: &openapi.Schema{
-								Type: "integer",
-							},
-						},
-						openapi.Parameter{
-							In:       "query",
-							Name:     constants.FIELD_PAGE_TOKEN_NAME,
-							Required: false,
-							Schema: &openapi.Schema{
-								Type: "string",
-							},
-						},
-					),
+					Parameters:  params,
 					Responses: map[string]openapi.Response{
 						"200": {
 							Description: "Successful response",

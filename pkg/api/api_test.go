@@ -341,6 +341,58 @@ func TestGetAPI(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "list method with skip and unreachable flags",
+			api: &openapi.OpenAPI{
+				OpenAPI: "3.1.0",
+				Servers: []openapi.Server{{URL: "https://api.example.com"}},
+				Paths: map[string]*openapi.PathItem{
+					"/widgets": {
+						Get: &openapi.Operation{
+							Parameters: []openapi.Parameter{
+								{Name: "skip"},
+								{Name: "unreachable", Schema: &openapi.Schema{Type: "boolean"}},
+							},
+							Responses: map[string]openapi.Response{
+								"200": {
+									Content: map[string]openapi.MediaType{
+										"application/json": {
+											Schema: &openapi.Schema{
+												Properties: map[string]openapi.Schema{
+													"results": {
+														Type: "array",
+														Items: &openapi.Schema{
+															Ref: "#/components/schemas/Widget",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Components: openapi.Components{
+					Schemas: map[string]openapi.Schema{
+						"Widget": {
+							Type: "object",
+							Properties: map[string]openapi.Schema{
+								"name": {Type: "string"},
+							},
+						},
+					},
+				},
+			},
+			validateResult: func(t *testing.T, sd *API) {
+				widget, ok := sd.Resources["widget"]
+				assert.True(t, ok, "widget resource should exist")
+				assert.NotNil(t, widget.ListMethod, "should have LIST method")
+				assert.True(t, widget.ListMethod.SupportsSkip, "should support skip parameter")
+				assert.True(t, widget.ListMethod.HasUnreachableResources, "should support unreachable parameter")
+			},
+		},
 	}
 
 	for _, tt := range tests {

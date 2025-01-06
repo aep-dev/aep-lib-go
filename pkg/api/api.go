@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aep-dev/aep-lib-go/pkg/cases"
+	"github.com/aep-dev/aep-lib-go/pkg/constants"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
 
@@ -140,7 +141,16 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 								break
 							}
 						}
-						if !found {
+						if found {
+							for _, param := range pathItem.Get.Parameters {
+								if param.Name == constants.FIELD_SKIP_NAME {
+									r.ListMethod.SupportsSkip = true
+								}
+								if param.Name == constants.FIELD_UNREACHABLE_NAME {
+									r.ListMethod.HasUnreachableResources = true
+								}
+							}
+						} else {
 							slog.Warn(fmt.Sprintf("resource %q has a LIST method with a response schema, but the items field is not present or is not an array.", path))
 						}
 					}

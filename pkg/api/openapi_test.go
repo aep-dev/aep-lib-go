@@ -37,6 +37,7 @@ func TestToOpenAPI(t *testing.T) {
 		},
 		ListMethod: &ListMethod{
 			HasUnreachableResources: true,
+			SupportsSkip:            true,
 		},
 		GetMethod:    &GetMethod{},
 		CreateMethod: &CreateMethod{},
@@ -126,6 +127,16 @@ func TestToOpenAPI(t *testing.T) {
 				"/publishers/{publisher}/books": {
 					Get: &openapi.Operation{
 						OperationID: "ListBook",
+						Parameters: []openapi.Parameter{
+							{
+								Name:     "skip",
+								In:       "query",
+								Required: false,
+								Schema: &openapi.Schema{
+									Type: "integer",
+								},
+							},
+						},
 					},
 					Post: &openapi.Operation{
 						OperationID: "CreateBook",

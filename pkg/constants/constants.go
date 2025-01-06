@@ -13,6 +13,8 @@ const (
 	FIELD_RESOURCES_NUMBER       = 10016
 	FIELD_PAGE_TOKEN_NAME        = "page_token"
 	FIELD_PAGE_TOKEN_NUMBER      = 10010
+	FIELD_SKIP_NAME              = "skip"
+	FIELD_SKIP_NUMBER            = 10021
 	FIELD_UPDATE_MASK_NAME       = "update_mask"
 	FIELD_UPDATE_MASK_NUMBER     = 10012
 	FIELD_MAX_PAGE_SIZE_NAME     = "max_page_size"
@@ -23,5 +25,5 @@ const (
 	FIELD_ID_NUMBER              = 10014
 	FIELD_UNREACHABLE_NAME       = "unreachable"
 	FIELD_UNREACHABLE_NUMBER     = 10019
-	// next number: 10021
+	// next number: 10022
 )
