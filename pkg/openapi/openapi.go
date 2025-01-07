@@ -160,6 +160,7 @@ type Schema struct {
 	XAEPFieldNumbers map[int]string `json:"x-aep-field-numbers,omitempty"`
 	ReadOnly         bool           `json:"readOnly,omitempty"`
 	Required         []string       `json:"required,omitempty"`
+	Description      string         `json:"description,omitempty"`
 }
 
 type Properties map[string]Schema
