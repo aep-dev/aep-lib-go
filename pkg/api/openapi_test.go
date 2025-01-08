@@ -37,6 +37,7 @@ func TestToOpenAPI(t *testing.T) {
 		},
 		ListMethod: &ListMethod{
 			HasUnreachableResources: true,
+			SupportsFilter:          true,
 			SupportsSkip:            true,
 		},
 		GetMethod:    &GetMethod{},
@@ -134,6 +135,14 @@ func TestToOpenAPI(t *testing.T) {
 								Required: false,
 								Schema: &openapi.Schema{
 									Type: "integer",
+								},
+							},
+							{
+								Name:     "filter",
+								In:       "query",
+								Required: false,
+								Schema: &openapi.Schema{
+									Type: "string",
 								},
 							},
 						},
@@ -267,6 +276,10 @@ func TestToOpenAPI(t *testing.T) {
 					if operations.Get.OperationID != "" {
 						assert.Equal(t, operations.Get.OperationID, pathItem.Get.OperationID,
 							"expected matching operationId for GET %s", path)
+					}
+					// verify that query parameters in expectedOperations are present in pathItem.Get.Parameters
+					for _, param := range operations.Get.Parameters {
+						assert.Contains(t, pathItem.Get.Parameters, param, "expected query parameter %s for path %s", param.Name, path)
 					}
 				}
 				if operations.Patch != nil {

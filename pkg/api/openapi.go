@@ -121,6 +121,16 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					})
 				}
+				if r.ListMethod.SupportsFilter {
+					params = append(params, openapi.Parameter{
+						In:       "query",
+						Name:     constants.FIELD_FILTER_NAME,
+						Required: false,
+						Schema: &openapi.Schema{
+							Type: "string",
+						},
+					})
+				}
 				addMethodToPath(paths, listPath, "get", openapi.Operation{
 					OperationID: fmt.Sprintf("List%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("List method for %s", r.Singular),

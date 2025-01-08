@@ -149,6 +149,9 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 								if param.Name == constants.FIELD_UNREACHABLE_NAME {
 									r.ListMethod.HasUnreachableResources = true
 								}
+								if param.Name == constants.FIELD_FILTER_NAME {
+									r.ListMethod.SupportsFilter = true
+								}
 							}
 						} else {
 							slog.Warn(fmt.Sprintf("resource %q has a LIST method with a response schema, but the items field is not present or is not an array.", path))

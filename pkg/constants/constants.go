@@ -1,6 +1,8 @@
 package constants
 
 const (
+	FIELD_FILTER_NAME            = "filter"
+	FIELD_FILTER_NUMBER          = 10022
 	FIELD_FORCE_NAME             = "force"
 	FIELD_FORCE_NUMBER           = 10020
 	FIELD_PARENT_NAME            = "parent"
@@ -25,5 +27,5 @@ const (
 	FIELD_ID_NUMBER              = 10014
 	FIELD_UNREACHABLE_NAME       = "unreachable"
 	FIELD_UNREACHABLE_NUMBER     = 10019
-	// next number: 10022
+	// next number: 10023
 )
