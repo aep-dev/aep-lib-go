@@ -200,6 +200,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					},
 					Responses: map[string]openapi.Response{
 						"200": {
+							Description: "Successful response",
 							Content: map[string]openapi.MediaType{
 								"application/merge-patch+json": {
 									Schema: &openapi.Schema{
@@ -262,6 +263,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
 						"200": {
+							Description: "Successful response",
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: custom.Response,
