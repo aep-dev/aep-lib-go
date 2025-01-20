@@ -153,12 +153,14 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			if r.CreateMethod != nil {
 				createPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				params := pwp.Params
-				if !r.CreateMethod.SupportsUserSettableCreate {
+				if r.CreateMethod.SupportsUserSettableCreate {
 					params = append(params, openapi.Parameter{
 						In:       "query",
 						Name:     "id",
 						Required: false,
-						Type:     "string",
+						Schema: &openapi.Schema{
+							Type: "string",
+						},
 					})
 				}
 				addMethodToPath(paths, createPath, "post", openapi.Operation{
@@ -186,9 +188,26 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					OperationID: fmt.Sprintf("Update%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Update method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
-					RequestBody: &bodyParam,
+					RequestBody: &openapi.RequestBody{
+						Required: true,
+						Content: map[string]openapi.MediaType{
+							"application/merge-patch+json": {
+								Schema: &openapi.Schema{
+									Ref: schemaRef,
+								},
+							},
+						},
+					},
 					Responses: map[string]openapi.Response{
-						"200": resourceResponse,
+						"200": {
+							Content: map[string]openapi.MediaType{
+								"application/merge-patch+json": {
+									Schema: &openapi.Schema{
+										Ref: schemaRef,
+									},
+								},
+							},
+						},
 					},
 				})
 			}
@@ -242,7 +261,13 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					Description: fmt.Sprintf("Custom method %s for %s", custom.Name, r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
-						"200": resourceResponse,
+						"200": {
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: custom.Response,
+								},
+							},
+						},
 					},
 				}
 				if custom.Method == "POST" {
@@ -250,7 +275,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						Required: true,
 						Content: map[string]openapi.MediaType{
 							"application/json": {
-								Schema: &openapi.Schema{},
+								Schema: custom.Request,
 							},
 						},
 					}

@@ -20,9 +20,11 @@ func TestToOpenAPI(t *testing.T) {
 				"id":    {Type: "string"},
 			},
 		},
-		ListMethod:   &ListMethod{},
-		GetMethod:    &GetMethod{},
-		CreateMethod: &CreateMethod{},
+		ListMethod: &ListMethod{},
+		GetMethod:  &GetMethod{},
+		CreateMethod: &CreateMethod{
+			SupportsUserSettableCreate: true,
+		},
 	}
 	book := &Resource{
 		Singular: "book",
@@ -40,8 +42,10 @@ func TestToOpenAPI(t *testing.T) {
 			SupportsFilter:          true,
 			SupportsSkip:            true,
 		},
-		GetMethod:    &GetMethod{},
-		CreateMethod: &CreateMethod{},
+		GetMethod: &GetMethod{},
+		CreateMethod: &CreateMethod{
+			SupportsUserSettableCreate: true,
+		},
 		UpdateMethod: &UpdateMethod{},
 		DeleteMethod: &DeleteMethod{},
 		CustomMethods: []*CustomMethod{
@@ -149,6 +153,16 @@ func TestToOpenAPI(t *testing.T) {
 					},
 					Post: &openapi.Operation{
 						OperationID: "CreateBook",
+						Parameters: []openapi.Parameter{
+							{
+								Name:     "id",
+								In:       "query",
+								Required: false,
+								Schema: &openapi.Schema{
+									Type: "string",
+								},
+							},
+						},
 					},
 				},
 				"/publishers/{publisher}/books/{book}": {
@@ -157,6 +171,27 @@ func TestToOpenAPI(t *testing.T) {
 					},
 					Patch: &openapi.Operation{
 						OperationID: "UpdateBook",
+						RequestBody: &openapi.RequestBody{
+							Required: true,
+							Content: map[string]openapi.MediaType{
+								"application/merge-patch+json": {
+									Schema: &openapi.Schema{
+										Ref: "#/components/schemas/book",
+									},
+								},
+							},
+						},
+						Responses: map[string]openapi.Response{
+							"200": {
+								Content: map[string]openapi.MediaType{
+									"application/merge-patch+json": {
+										Schema: &openapi.Schema{
+											Ref: "#/components/schemas/book",
+										},
+									},
+								},
+							},
+						},
 					},
 					Delete: &openapi.Operation{
 						OperationID: "DeleteBook",
@@ -169,7 +204,10 @@ func TestToOpenAPI(t *testing.T) {
 							Required: true,
 							Content: map[string]openapi.MediaType{
 								"application/json": {
-									Schema: &openapi.Schema{},
+									Schema: &openapi.Schema{
+										Type:       "object",
+										Properties: map[string]openapi.Schema{},
+									},
 								},
 							},
 						},
@@ -271,45 +309,12 @@ func TestToOpenAPI(t *testing.T) {
 			for path, operations := range tt.expectedOperations {
 				pathItem, exists := openAPI.Paths[path]
 				assert.True(t, exists, "Expected path %s not found", path)
-				if operations.Get != nil {
-					assert.NotNil(t, pathItem.Get, "expected get operation for path %s", path)
-					if operations.Get.OperationID != "" {
-						assert.Equal(t, operations.Get.OperationID, pathItem.Get.OperationID,
-							"expected matching operationId for GET %s", path)
-					}
-					// verify that query parameters in expectedOperations are present in pathItem.Get.Parameters
-					for _, param := range operations.Get.Parameters {
-						assert.Contains(t, pathItem.Get.Parameters, param, "expected query parameter %s for path %s", param.Name, path)
-					}
-				}
-				if operations.Patch != nil {
-					assert.NotNil(t, pathItem.Patch, "expected patch operation for path %s", path)
-					if operations.Patch.OperationID != "" {
-						assert.Equal(t, operations.Patch.OperationID, pathItem.Patch.OperationID,
-							"expected matching operationId for PATCH %s", path)
-					}
-				}
-				if operations.Post != nil {
-					assert.NotNil(t, pathItem.Post, "expected post operation for path %s", path)
-					if operations.Post.OperationID != "" {
-						assert.Equal(t, operations.Post.OperationID, pathItem.Post.OperationID,
-							"expected matching operationId for POST %s", path)
-					}
-				}
-				if operations.Put != nil {
-					assert.NotNil(t, pathItem.Put, "expected put operation for path %s", path)
-					if operations.Put.OperationID != "" {
-						assert.Equal(t, operations.Put.OperationID, pathItem.Put.OperationID,
-							"expected matching operationId for PUT %s", path)
-					}
-				}
-				if operations.Delete != nil {
-					assert.NotNil(t, pathItem.Delete, "expected delete operation for path %s", path)
-					if operations.Delete.OperationID != "" {
-						assert.Equal(t, operations.Delete.OperationID, pathItem.Delete.OperationID,
-							"expected matching operationId for DELETE %s", path)
-					}
-				}
+
+				assertOperationsMatch(t, path, operations.Get, pathItem.Get)
+				assertOperationsMatch(t, path, operations.Post, pathItem.Post)
+				assertOperationsMatch(t, path, operations.Put, pathItem.Put)
+				assertOperationsMatch(t, path, operations.Patch, pathItem.Patch)
+				assertOperationsMatch(t, path, operations.Delete, pathItem.Delete)
 			}
 
 			// Add new verification for List response schemas
@@ -496,5 +501,41 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// assertOperationsMatch compares two OpenAPI operations and verifies they match the expected configuration
+func assertOperationsMatch(t *testing.T, path string, expected, actual *openapi.Operation) {
+	if expected == nil {
+		assert.Nil(t, actual, "unexpected operation for path %s", path)
+		return
+	}
+
+	assert.NotNil(t, actual, "expected operation for path %s", path)
+
+	// Compare OperationID if specified
+	if expected.OperationID != "" {
+		assert.Equal(t, expected.OperationID, actual.OperationID,
+			"expected matching operationId for path %s", path)
+	}
+
+	// Compare Parameters if specified
+	for _, expectedParam := range expected.Parameters {
+		assert.Contains(t, actual.Parameters, expectedParam,
+			"expected parameter %s for path %s", expectedParam.Name, path)
+	}
+
+	// Compare RequestBody if specified
+	if expected.RequestBody != nil {
+		assert.Equal(t, expected.RequestBody, actual.RequestBody,
+			"expected matching request body for path %s", path)
+	}
+
+	// Compare Responses if specified
+	for status, expectedResponse := range expected.Responses {
+		actualResponse, exists := actual.Responses[status]
+		assert.True(t, exists, "expected response %s for path %s", status, path)
+		assert.Equal(t, expectedResponse, actualResponse,
+			"expected matching response for status %s path %s", status, path)
 	}
 }
