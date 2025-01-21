@@ -237,7 +237,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 	return &API{
 		ServerURL: serverURL,
 		Name:      api.Info.Title,
-		Contact:   getContact(api.Contact),
+		Contact:   getContact(api.Info.Contact),
 		Resources: resourceBySingular,
 		Schemas:   schemas,
 	}, nil

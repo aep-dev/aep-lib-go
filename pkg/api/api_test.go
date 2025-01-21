@@ -9,10 +9,12 @@ import (
 
 var basicOpenAPI = &openapi.OpenAPI{
 	OpenAPI: "3.1.0",
-	Contact: openapi.Contact{
-		Name:  "John Doe",
-		Email: "john.doe@example.com",
-		URL:   "https://example.com",
+	Info: openapi.Info{
+		Contact: openapi.Contact{
+			Name:  "John Doe",
+			Email: "john.doe@example.com",
+			URL:   "https://example.com",
+		},
 	},
 	Servers: []openapi.Server{{URL: "https://api.example.com"}},
 	Paths: map[string]*openapi.PathItem{

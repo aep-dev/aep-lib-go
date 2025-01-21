@@ -20,10 +20,9 @@ const (
 type OpenAPI struct {
 	// oas 2.0 has swagger in the root.
 	Swagger    string               `json:"swagger,omitempty"`
-	Contact    Contact              `json:"contact,omitempty"`
+	Info       Info                 `json:"info"`
 	OpenAPI    string               `json:"openapi,omitempty"`
 	Servers    []Server             `json:"servers,omitempty"`
-	Info       Info                 `json:"info"`
 	Paths      map[string]*PathItem `json:"paths"`
 	Components Components           `json:"components,omitempty"`
 	// oas 2.0 has definitions in the root.
@@ -102,9 +101,10 @@ type ServerVariable struct {
 }
 
 type Info struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Version     string `json:"version"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Version     string  `json:"version"`
+	Contact     Contact `json:"contact,omitempty"`
 }
 
 type PathItem struct {
