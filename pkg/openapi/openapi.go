@@ -18,8 +18,9 @@ const (
 )
 
 type OpenAPI struct {
-	// oas 2.0 has swagger in the root.k
+	// oas 2.0 has swagger in the root.
 	Swagger    string               `json:"swagger,omitempty"`
+	Contact    Contact              `json:"contact,omitempty"`
 	OpenAPI    string               `json:"openapi,omitempty"`
 	Servers    []Server             `json:"servers,omitempty"`
 	Info       Info                 `json:"info"`
@@ -80,6 +81,12 @@ func (o *OpenAPI) GetSchemaFromRequestBody(r RequestBody) *Schema {
 		ct := r.Content[ContentType]
 		return ct.Schema
 	}
+}
+
+type Contact struct {
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
+	URL   string `json:"url,omitempty"`
 }
 
 type Server struct {

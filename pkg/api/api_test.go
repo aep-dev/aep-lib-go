@@ -9,6 +9,11 @@ import (
 
 var basicOpenAPI = &openapi.OpenAPI{
 	OpenAPI: "3.1.0",
+	Contact: openapi.Contact{
+		Name:  "John Doe",
+		Email: "john.doe@example.com",
+		URL:   "https://example.com",
+	},
 	Servers: []openapi.Server{{URL: "https://api.example.com"}},
 	Paths: map[string]*openapi.PathItem{
 		"/widgets": {
@@ -391,6 +396,15 @@ func TestGetAPI(t *testing.T) {
 				assert.NotNil(t, widget.ListMethod, "should have LIST method")
 				assert.True(t, widget.ListMethod.SupportsSkip, "should support skip parameter")
 				assert.True(t, widget.ListMethod.HasUnreachableResources, "should support unreachable parameter")
+			},
+		},
+		{
+			name: "contact information",
+			api:  basicOpenAPI,
+			validateResult: func(t *testing.T, sd *API) {
+				assert.Equal(t, "John Doe", sd.Contact.Name)
+				assert.Equal(t, "john.doe@example.com", sd.Contact.Email)
+				assert.Equal(t, "https://example.com", sd.Contact.URL)
 			},
 		},
 	}

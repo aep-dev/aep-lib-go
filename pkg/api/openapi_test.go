@@ -83,6 +83,11 @@ func TestToOpenAPI(t *testing.T) {
 	exampleAPI := &API{
 		Name:      "Test API",
 		ServerURL: "https://api.example.com",
+		Contact: &Contact{
+			Name:  "John Doe",
+			Email: "john.doe@example.com",
+			URL:   "https://example.com",
+		},
 		Schemas: map[string]*openapi.Schema{
 			"account": {
 				Type: "object",

@@ -13,8 +13,15 @@ import (
 type API struct {
 	ServerURL string
 	Name      string
+	Contact   *Contact
 	Schemas   map[string]*openapi.Schema
 	Resources map[string]*Resource
+}
+
+type Contact struct {
+	Name  string
+	Email string
+	URL   string
 }
 
 func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
@@ -230,6 +237,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 	return &API{
 		ServerURL: serverURL,
 		Name:      api.Info.Title,
+		Contact:   getContact(api.Contact),
 		Resources: resourceBySingular,
 		Schemas:   schemas,
 	}, nil
@@ -338,4 +346,15 @@ func foldResourceMethods(from, into *Resource) {
 	if from.DeleteMethod != nil {
 		into.DeleteMethod = from.DeleteMethod
 	}
+}
+
+func getContact(contact openapi.Contact) *Contact {
+	if contact.Name != "" || contact.Email != "" || contact.URL != "" {
+		return &Contact{
+			Name:  contact.Name,
+			Email: contact.Email,
+			URL:   contact.URL,
+		}
+	}
+	return nil
 }
