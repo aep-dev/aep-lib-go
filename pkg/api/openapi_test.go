@@ -293,6 +293,13 @@ func TestToOpenAPI(t *testing.T) {
 			assert.Equal(t, tt.api.Name, openAPI.Info.Title)
 			assert.Equal(t, tt.api.ServerURL, openAPI.Servers[0].URL)
 
+			// Verify Contact information
+			if tt.api.Contact != nil {
+				assert.Equal(t, tt.api.Contact.Name, openAPI.Info.Contact.Name)
+				assert.Equal(t, tt.api.Contact.Email, openAPI.Info.Contact.Email)
+				assert.Equal(t, tt.api.Contact.URL, openAPI.Info.Contact.URL)
+			}
+
 			// Verify paths exist
 			fmt.Println(openAPI.Paths)
 			for _, expectedPath := range tt.expectedPaths {

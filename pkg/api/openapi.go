@@ -300,6 +300,15 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 	for k, v := range api.Schemas {
 		components.Schemas[k] = *v
 	}
+
+	contact := openapi.Contact{}
+	if api.Contact.Name != "" || api.Contact.Email != "" || api.Contact.URL != "" {
+		contact = openapi.Contact{
+			Name:  api.Contact.Name,
+			Email: api.Contact.Email,
+			URL:   api.Contact.URL,
+		}
+	}
 	openAPI := &openapi.OpenAPI{
 		OpenAPI: "3.1.0",
 		Servers: []openapi.Server{
@@ -309,6 +318,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			Title:       api.Name,
 			Version:     "version not set",
 			Description: "An API for " + api.Name,
+			Contact:     contact,
 		},
 		Paths:      paths,
 		Components: components,
