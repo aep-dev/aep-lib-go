@@ -24,24 +24,30 @@ type Resource struct {
 
 type CreateMethod struct {
 	SupportsUserSettableCreate bool
+	Parameters                 []openapi.Parameter
 }
 
 type ApplyMethod struct {
+	Parameters []openapi.Parameter
 }
 
 type GetMethod struct {
+	Parameters []openapi.Parameter
 }
 
 type UpdateMethod struct {
+	Parameters []openapi.Parameter
 }
 
 type ListMethod struct {
 	HasUnreachableResources bool
 	SupportsFilter          bool
 	SupportsSkip            bool
+	Parameters              []openapi.Parameter
 }
 
 type DeleteMethod struct {
+	Parameters []openapi.Parameter
 }
 
 type CustomMethod struct {

@@ -98,18 +98,24 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 		} else if p.IsResourcePattern {
 			// treat it like a collection pattern (update, delete, get)
 			if pathItem.Delete != nil {
-				r.DeleteMethod = &DeleteMethod{}
+				r.DeleteMethod = &DeleteMethod{
+					Parameters: pathItem.Delete.Parameters,
+				}
 			}
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
 					sRef = api.GetSchemaFromResponse(resp)
-					r.GetMethod = &GetMethod{}
+					r.GetMethod = &GetMethod{
+						Parameters: pathItem.Get.Parameters,
+					}
 				}
 			}
 			if pathItem.Patch != nil {
 				if resp, ok := pathItem.Patch.Responses["200"]; ok {
 					sRef = api.GetSchemaFromResponse(resp)
-					r.UpdateMethod = &UpdateMethod{}
+					r.UpdateMethod = &UpdateMethod{
+						Parameters: pathItem.Patch.Parameters,
+					}
 				}
 			}
 		} else {
@@ -125,7 +131,8 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 							break
 						}
 					}
-					r.CreateMethod = &CreateMethod{SupportsUserSettableCreate: supportsUserSettableCreate}
+					r.CreateMethod = &CreateMethod{SupportsUserSettableCreate: supportsUserSettableCreate,
+						Parameters: pathItem.Post.Parameters}
 				}
 			}
 			// list method
@@ -149,6 +156,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 							}
 						}
 						if found {
+							r.ListMethod.Parameters = pathItem.Get.Parameters
 							for _, param := range pathItem.Get.Parameters {
 								if param.Name == constants.FIELD_SKIP_NAME {
 									r.ListMethod.SupportsSkip = true
