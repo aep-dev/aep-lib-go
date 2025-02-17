@@ -313,7 +313,7 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 			Plural:       s.XAEPResource.Plural,
 			Parents:      parents,
 			Children:     []*Resource{},
-			PatternElems: strings.Split(s.XAEPResource.Patterns[0], "/")[1:],
+			PatternElems: strings.Split(strings.TrimPrefix(s.XAEPResource.Patterns[0], "/"), "/"),
 			Schema:       s,
 		}
 	} else {
