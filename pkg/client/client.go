@@ -51,6 +51,12 @@ func Create(ctx context.Context, r *api.Resource, c *http.Client, serverUrl stri
 	if err != nil {
 		return nil, err
 	}
+
+	err = CheckErrors(data)
+	if err != nil {
+		return nil, err
+	}
+
 	return data, nil
 }
 
@@ -79,6 +85,11 @@ func Read(ctx context.Context, c *http.Client, serverUrl string, path string) (m
 		return nil, fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
 
+	err = CheckErrors(data)
+	if err != nil {
+		return nil, err
+	}
+
 	return data, nil
 }
 
@@ -90,7 +101,24 @@ func Delete(ctx context.Context, c *http.Client, serverUrl string, path string) 
 		return fmt.Errorf("error creating delete request: %v", err)
 	}
 
-	_, err = c.Do(req)
+	resp, err := c.Do(req)
+	var data map[string]interface{}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %v", err)
+	}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling JSON: %v", err)
+	}
+
+	err = CheckErrors(data)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
@@ -107,8 +135,36 @@ func Update(ctx context.Context, c *http.Client, serverUrl string, path string, 
 		return fmt.Errorf("error creating delete request: %v", err)
 	}
 
-	_, err = c.Do(req)
-	return err
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+
+	var data map[string]interface{}
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %v", err)
+	}
+
+	err = json.Unmarshal(respBody, &data)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling JSON: %v", err)
+	}
+
+	err = CheckErrors(data)
+	if err != nil {
+		return err
+	}
+
+	return CheckErrors(data)
+}
+
+func CheckErrors(resp map[string]interface{}) error {
+	e, ok := resp["error"]
+	if ok {
+		return fmt.Errorf("returned errors, %v", e)
+	}
 }
 
 func createBase(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string, suffix string) string {
