@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/aep-dev/aep-lib-go/pkg/constants"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 	"github.com/stretchr/testify/assert"
 )
@@ -152,6 +153,35 @@ func TestToOpenAPI(t *testing.T) {
 								Required: false,
 								Schema: &openapi.Schema{
 									Type: "string",
+								},
+							},
+						},
+						Responses: map[string]openapi.Response{
+							"200": {
+								Description: "Successful response",
+								Content: map[string]openapi.MediaType{
+									"application/json": {
+										Schema: &openapi.Schema{
+											Type: "object",
+											Properties: map[string]openapi.Schema{
+												constants.FIELD_NEXT_PAGE_TOKEN_NAME: {
+													Type: "string",
+												},
+												constants.FIELD_UNREACHABLE_NAME: {
+													Type: "array",
+													Items: &openapi.Schema{
+														Type: "string",
+													},
+												},
+												constants.FIELD_RESULTS_NAME: {
+													Type: "array",
+													Items: &openapi.Schema{
+														Ref: "#/components/schemas/book",
+													},
+												},
+											},
+										},
+									},
 								},
 							},
 						},

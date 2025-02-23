@@ -77,11 +77,14 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			if r.ListMethod != nil {
 				listPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				responseProperties := map[string]openapi.Schema{
-					"results": {
+					constants.FIELD_RESULTS_NAME: {
 						Type: "array",
 						Items: &openapi.Schema{
 							Ref: schemaRef,
 						},
+					},
+					constants.FIELD_NEXT_PAGE_TOKEN_NAME: {
+						Type: "string",
 					},
 				}
 				if r.ListMethod.HasUnreachableResources {

@@ -27,5 +27,7 @@ const (
 	FIELD_ID_NUMBER              = 10014
 	FIELD_UNREACHABLE_NAME       = "unreachable"
 	FIELD_UNREACHABLE_NUMBER     = 10019
+	FIELD_RESULTS_NAME           = "results"
+	FIELD_RESULTS_NUMBER         = 10016
 	// next number: 10023
 )
