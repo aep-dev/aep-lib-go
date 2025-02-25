@@ -19,13 +19,14 @@ func Create(ctx context.Context, r *api.Resource, c *http.Client, serverUrl stri
 			return nil, fmt.Errorf("id field not found in %v", body)
 		}
 		idString, ok := id.(string)
-		if !ok {
-			return nil, fmt.Errorf("id field is not string %v", id)
+		if ok {
+			suffix = fmt.Sprintf("?id=%s", idString)
 		}
-
-		suffix = fmt.Sprintf("?id=%s", idString)
 	}
-	url := createBase(ctx, r, serverUrl, parameters, suffix)
+	url, err := basePath(ctx, r, serverUrl, parameters, suffix)
+	if err != nil {
+		return nil, err
+	}
 
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
@@ -34,38 +35,22 @@ func Create(ctx context.Context, r *api.Resource, c *http.Client, serverUrl stri
 
 	req, err := http.NewRequest("POST", url, strings.NewReader(string(jsonBody)))
 	if err != nil {
-		return nil, fmt.Errorf("error creating post request: %v", err)
+		return nil, fmt.Errorf("error creating POST request: %v", err)
 	}
 
 	resp, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %v", err)
-	}
-	var data map[string]interface{}
-	err = json.Unmarshal(respBody, &data)
-	if err != nil {
-		return nil, err
-	}
-
-	err = CheckErrors(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return parseResponse(resp)
 }
 
-func Read(ctx context.Context, c *http.Client, serverUrl string, path string) (map[string]interface{}, error) {
+func Get(ctx context.Context, c *http.Client, serverUrl string, path string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/%s", serverUrl, strings.TrimPrefix(path, "/"))
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error creating post request: %v", err)
+		return nil, fmt.Errorf("error creating GET request: %v", err)
 	}
 
 	resp, err := c.Do(req)
@@ -73,24 +58,7 @@ func Read(ctx context.Context, c *http.Client, serverUrl string, path string) (m
 		return nil, err
 	}
 
-	var data map[string]interface{}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %v", err)
-	}
-
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling JSON: %v", err)
-	}
-
-	err = CheckErrors(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	return parseResponse(resp)
 }
 
 func Delete(ctx context.Context, c *http.Client, serverUrl string, path string) error {
@@ -98,27 +66,15 @@ func Delete(ctx context.Context, c *http.Client, serverUrl string, path string) 
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
-		return fmt.Errorf("error creating delete request: %v", err)
+		return fmt.Errorf("error creating DELETE request: %v", err)
 	}
 
 	resp, err := c.Do(req)
-	var data map[string]interface{}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response body: %v", err)
-	}
-
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling JSON: %v", err)
-	}
-
-	err = CheckErrors(data)
 	if err != nil {
 		return err
 	}
+
+	_, err = parseResponse(resp)
 	return err
 }
 
@@ -132,7 +88,7 @@ func Update(ctx context.Context, c *http.Client, serverUrl string, path string, 
 
 	req, err := http.NewRequest("PATCH", url, strings.NewReader(string(reqBody)))
 	if err != nil {
-		return fmt.Errorf("error creating delete request: %v", err)
+		return fmt.Errorf("error creating PATCH request: %v", err)
 	}
 
 	resp, err := c.Do(req)
@@ -140,34 +96,39 @@ func Update(ctx context.Context, c *http.Client, serverUrl string, path string, 
 		return err
 	}
 
-	var data map[string]interface{}
+	_, err = parseResponse(resp)
+	return err
+}
+
+func parseResponse(resp *http.Response) (map[string]interface{}, error) {
 	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("error reading response body: %v", err)
+		return nil, fmt.Errorf("error reading response body: %v", err)
 	}
-
+	var data map[string]interface{}
 	err = json.Unmarshal(respBody, &data)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling JSON: %v", err)
+		return nil, err
 	}
 
-	err = CheckErrors(data)
+	err = checkErrors(data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return CheckErrors(data)
+	return data, nil
 }
 
-func CheckErrors(resp map[string]interface{}) error {
+func checkErrors(resp map[string]interface{}) error {
 	e, ok := resp["error"]
 	if ok {
 		return fmt.Errorf("returned errors, %v", e)
 	}
+	return nil
 }
 
-func createBase(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string, suffix string) string {
+func basePath(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string, suffix string) (string, error) {
 	serverUrl = strings.TrimSuffix(serverUrl, "/")
 	urlElems := []string{serverUrl}
 	for i, elem := range r.PatternElems {
@@ -179,17 +140,20 @@ func createBase(ctx context.Context, r *api.Resource, serverUrl string, paramete
 			urlElems = append(urlElems, elem)
 		} else {
 			paramName := elem[1 : len(elem)-1]
-			if value, ok := parameters[paramName]; ok {
-				if strings.Contains(value, "/") {
-					value = strings.Split(value, "/")[len(strings.Split(value, "/"))-1]
-				}
-				urlElems = append(urlElems, value)
+			value, ok := parameters[paramName]
+			if !ok {
+				return "", fmt.Errorf("parameter %s not found in parameters %v", paramName, parameters)
 			}
+
+			if strings.Contains(value, "/") {
+				value = strings.Split(value, "/")[len(strings.Split(value, "/"))-1]
+			}
+			urlElems = append(urlElems, value)
 		}
 	}
 	result := strings.Join(urlElems, "/")
 	if suffix != "" {
 		result = result + suffix
 	}
-	return result
+	return result, nil
 }

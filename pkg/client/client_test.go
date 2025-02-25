@@ -96,7 +96,7 @@ func TestGet(t *testing.T) {
 	ctx := context.Background()
 
 	// Call the Read method
-	data, err := Read(ctx, http.DefaultClient, "http://localhost:8081", "/publishers/my-pub/books/1")
+	data, err := Get(ctx, http.DefaultClient, "http://localhost:8081", "/publishers/my-pub/books/1")
 	if err != nil {
 		t.Fatal(err)
 	}
