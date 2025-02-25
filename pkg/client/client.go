@@ -106,6 +106,12 @@ func parseResponse(resp *http.Response) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reading response body: %v", err)
 	}
+
+	// Empty response means no errors.
+	if len(respBody) == 0 {
+		return map[string]interface{}{}, nil
+	}
+
 	var data map[string]interface{}
 	err = json.Unmarshal(respBody, &data)
 	if err != nil {
