@@ -305,7 +305,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 	}
 
 	contact := openapi.Contact{}
-	if api.Contact.Name != "" || api.Contact.Email != "" || api.Contact.URL != "" {
+	if api.Contact != nil {
 		contact = openapi.Contact{
 			Name:  api.Contact.Name,
 			Email: api.Contact.Email,
