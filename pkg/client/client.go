@@ -13,12 +13,12 @@ import (
 
 type Client struct {
 	Headers map[string]string
-	c       *http.Client
+	client  *http.Client
 }
 
 func NewClient(c *http.Client) *Client {
 	return &Client{
-		c:       c,
+		client:  c,
 		Headers: make(map[string]string),
 	}
 }
@@ -50,7 +50,7 @@ func (c *Client) Create(ctx context.Context, r *api.Resource, serverUrl string, 
 		return nil, fmt.Errorf("error creating POST request: %v", err)
 	}
 
-	resp, err := c.c.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *Client) Get(ctx context.Context, serverUrl string, path string) (map[st
 		return nil, fmt.Errorf("error creating GET request: %v", err)
 	}
 
-	resp, err := c.c.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *Client) Delete(ctx context.Context, serverUrl string, path string) erro
 		return fmt.Errorf("error creating DELETE request: %v", err)
 	}
 
-	resp, err := c.c.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (c *Client) Update(ctx context.Context, serverUrl string, path string, body
 		return fmt.Errorf("error creating PATCH request: %v", err)
 	}
 
-	resp, err := c.c.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
 	}
