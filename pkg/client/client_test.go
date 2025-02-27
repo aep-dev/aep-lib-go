@@ -35,8 +35,10 @@ func TestCreate(t *testing.T) {
 		"publisher": "my-pub",
 	}
 
+	c := NewClient(http.DefaultClient)
+
 	// Call the Create method
-	data, err := Create(ctx, r, http.DefaultClient, "http://localhost:8081/", body, parameters)
+	data, err := c.Create(ctx, r, "http://localhost:8081/", body, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +77,8 @@ func TestCreateWithUserSpecifiedId(t *testing.T) {
 	}
 
 	// Call the Create method
-	data, err := Create(ctx, r, http.DefaultClient, "http://localhost:8081/", body, parameters)
+	c := NewClient(http.DefaultClient)
+	data, err := c.Create(ctx, r, "http://localhost:8081/", body, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +99,8 @@ func TestGet(t *testing.T) {
 	ctx := context.Background()
 
 	// Call the Read method
-	data, err := Get(ctx, http.DefaultClient, "http://localhost:8081", "/publishers/my-pub/books/1")
+	c := NewClient(http.DefaultClient)
+	data, err := c.Get(ctx, "http://localhost:8081", "/publishers/my-pub/books/1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +121,8 @@ func TestDelete(t *testing.T) {
 	ctx := context.Background()
 
 	// Call the Delete method
-	err := Delete(ctx, http.DefaultClient, "http://localhost:8081", "/publishers/my-pub/books/1")
+	c := NewClient(http.DefaultClient)
+	err := c.Delete(ctx, "http://localhost:8081", "/publishers/my-pub/books/1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +144,8 @@ func TestUpdate(t *testing.T) {
 	}
 
 	// Call the Update method
-	err := Update(ctx, http.DefaultClient, "http://localhost:8081", "/publishers/my-pub/books/1", body)
+	c := NewClient(http.DefaultClient)
+	err := c.Update(ctx, "http://localhost:8081", "/publishers/my-pub/books/1", body)
 	if err != nil {
 		t.Fatal(err)
 	}
