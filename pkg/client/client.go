@@ -11,7 +11,19 @@ import (
 	"github.com/aep-dev/aep-lib-go/pkg/api"
 )
 
-func Create(ctx context.Context, r *api.Resource, c *http.Client, serverUrl string, body map[string]interface{}, parameters map[string]string) (map[string]interface{}, error) {
+type Client struct {
+	Headers map[string]string
+	c       *http.Client
+}
+
+func NewClient(c *http.Client) *Client {
+	return &Client{
+		c:       c,
+		Headers: make(map[string]string),
+	}
+}
+
+func (c *Client) Create(ctx context.Context, r *api.Resource, serverUrl string, body map[string]interface{}, parameters map[string]string) (map[string]interface{}, error) {
 	suffix := ""
 	if r.CreateMethod != nil && r.CreateMethod.SupportsUserSettableCreate {
 		id, ok := body["id"]
@@ -33,27 +45,27 @@ func Create(ctx context.Context, r *api.Resource, c *http.Client, serverUrl stri
 		return nil, fmt.Errorf("error marshalling JSON: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", url, strings.NewReader(string(jsonBody)))
+	req, err := c.newRequest("POST", url, strings.NewReader(string(jsonBody)))
 	if err != nil {
 		return nil, fmt.Errorf("error creating POST request: %v", err)
 	}
 
-	resp, err := c.Do(req)
+	resp, err := c.c.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	return parseResponse(resp)
 }
 
-func Get(ctx context.Context, c *http.Client, serverUrl string, path string) (map[string]interface{}, error) {
+func (c *Client) Get(ctx context.Context, serverUrl string, path string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/%s", serverUrl, strings.TrimPrefix(path, "/"))
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := c.newRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating GET request: %v", err)
 	}
 
-	resp, err := c.Do(req)
+	resp, err := c.c.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -61,15 +73,15 @@ func Get(ctx context.Context, c *http.Client, serverUrl string, path string) (ma
 	return parseResponse(resp)
 }
 
-func Delete(ctx context.Context, c *http.Client, serverUrl string, path string) error {
+func (c *Client) Delete(ctx context.Context, serverUrl string, path string) error {
 	url := fmt.Sprintf("%s/%s", serverUrl, strings.TrimPrefix(path, "/"))
 
-	req, err := http.NewRequest("DELETE", url, nil)
+	req, err := c.newRequest("DELETE", url, nil)
 	if err != nil {
 		return fmt.Errorf("error creating DELETE request: %v", err)
 	}
 
-	resp, err := c.Do(req)
+	resp, err := c.c.Do(req)
 	if err != nil {
 		return err
 	}
@@ -78,7 +90,7 @@ func Delete(ctx context.Context, c *http.Client, serverUrl string, path string) 
 	return err
 }
 
-func Update(ctx context.Context, c *http.Client, serverUrl string, path string, body map[string]interface{}) error {
+func (c *Client) Update(ctx context.Context, serverUrl string, path string, body map[string]interface{}) error {
 	url := fmt.Sprintf("%s/%s", serverUrl, strings.TrimPrefix(path, "/"))
 
 	reqBody, err := json.Marshal(body)
@@ -86,18 +98,29 @@ func Update(ctx context.Context, c *http.Client, serverUrl string, path string, 
 		return fmt.Errorf("error marshalling JSON for request body: %v", err)
 	}
 
-	req, err := http.NewRequest("PATCH", url, strings.NewReader(string(reqBody)))
+	req, err := c.newRequest("PATCH", url, strings.NewReader(string(reqBody)))
 	if err != nil {
 		return fmt.Errorf("error creating PATCH request: %v", err)
 	}
 
-	resp, err := c.Do(req)
+	resp, err := c.c.Do(req)
 	if err != nil {
 		return err
 	}
 
 	_, err = parseResponse(resp)
 	return err
+}
+
+func (c *Client) newRequest(method string, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, fmt.Errorf("error creating %s request: %v", method, err)
+	}
+	for key, value := range c.Headers {
+		req.Header.Set(key, value)
+	}
+	return req, nil
 }
 
 func parseResponse(resp *http.Response) (map[string]interface{}, error) {

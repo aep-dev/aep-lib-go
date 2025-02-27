@@ -35,8 +35,10 @@ func TestCreate(t *testing.T) {
 		"publisher": "my-pub",
 	}
 
+	c := NewClient(http.DefaultClient)
+
 	// Call the Create method
-	data, err := Create(ctx, r, http.DefaultClient, "http://localhost:8081/", body, parameters)
+	data, err := c.Create(ctx, r, "http://localhost:8081/", body, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
