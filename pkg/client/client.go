@@ -11,7 +11,7 @@ import (
 	"github.com/aep-dev/aep-lib-go/pkg/api"
 )
 
-type LoggingFunction func(ctx context.Context, message string)
+type LoggingFunction func(ctx context.Context, message string, args ...any)
 
 type Client struct {
 	Headers         map[string]string
@@ -21,9 +21,10 @@ type Client struct {
 
 func NewClient(c *http.Client) *Client {
 	return &Client{
-		client:          c,
-		Headers:         make(map[string]string),
-		LoggingFunction: func(ctx context.Context, message string) {},
+		client:  c,
+		Headers: make(map[string]string),
+		// The basic logging function does not do anything.
+		LoggingFunction: func(ctx context.Context, message string, args ...any) {},
 	}
 }
 
