@@ -11,12 +11,14 @@ import (
 	"github.com/aep-dev/aep-lib-go/pkg/api"
 )
 
-type LoggingFunction func(ctx context.Context, message string, args ...any)
+type RequestLoggingFunction func(ctx context.Context, req *http.Request, args ...any)
+type ResponseLoggingFunction func(ctx context.Context, resp *http.Response, args ...any)
 
 type Client struct {
-	Headers         map[string]string
-	client          *http.Client
-	LoggingFunction LoggingFunction
+	Headers                 map[string]string
+	client                  *http.Client
+	RequestLoggingFunction  RequestLoggingFunction
+	ResponseLoggingFunction ResponseLoggingFunction
 }
 
 func NewClient(c *http.Client) *Client {
@@ -24,7 +26,8 @@ func NewClient(c *http.Client) *Client {
 		client:  c,
 		Headers: make(map[string]string),
 		// The basic logging function does not do anything.
-		LoggingFunction: func(ctx context.Context, message string, args ...any) {},
+		RequestLoggingFunction:  func(ctx context.Context, req *http.Request, args ...any) {},
+		ResponseLoggingFunction: func(ctx context.Context, resp *http.Response, args ...any) {},
 	}
 }
 
@@ -125,7 +128,7 @@ func (c *Client) newRequest(ctx context.Context, method string, url string, body
 	for key, value := range c.Headers {
 		req.Header.Set(key, value)
 	}
-	c.LoggingFunction(ctx, fmt.Sprintf("Sending %s request to %s with body %v", method, url, body))
+	c.RequestLoggingFunction(ctx, req)
 	return req, nil
 }
 
@@ -136,7 +139,7 @@ func (c *Client) parseResponse(ctx context.Context, resp *http.Response) (map[st
 		return nil, fmt.Errorf("error reading response body: %v", err)
 	}
 
-	c.LoggingFunction(ctx, fmt.Sprintf("Received response %s", string(respBody)))
+	c.ResponseLoggingFunction(ctx, resp)
 
 	// Empty response means no errors.
 	if len(respBody) == 0 {
