@@ -150,3 +150,38 @@ func TestUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestList(t *testing.T) {
+	// Create a test server
+	httpmock.Activate()
+	httpmock.RegisterResponder("GET", "http://localhost:8081/publishers/my-pub/books",
+		httpmock.NewStringResponder(200, "{\"results\":[{\"path\":\"/publishers/my-pub/books/1\", \"price\":\"2\"}]}"))
+
+	// Create a test resource
+	r := &api.Resource{
+		CreateMethod: &api.CreateMethod{
+			SupportsUserSettableCreate: false,
+		},
+		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
+	}
+
+	// Create a test context
+	ctx := context.Background()
+
+	parameters := map[string]string{
+		"publisher": "my-pub",
+	}
+
+	c := NewClient(http.DefaultClient)
+
+	// Call the Create method
+	data, err := c.List(ctx, r, "http://localhost:8081/", parameters)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check the response
+	if len(data) != 1 {
+		t.Errorf("expected 1 item in the list, got %d", len(data))
+	}
+}
