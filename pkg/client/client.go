@@ -71,7 +71,7 @@ func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, pa
 		return nil, err
 	}
 
-	req, err := c.newRequest("GET", url, nil)
+	req, err := c.newRequest(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating GET request: %v", err)
 	}
@@ -80,7 +80,7 @@ func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, pa
 	if err != nil {
 		return nil, err
 	}
-	return parseResponse(resp)
+	return c.parseResponse(ctx, resp)
 }
 
 func (c *Client) Get(ctx context.Context, serverUrl string, path string) (map[string]interface{}, error) {
