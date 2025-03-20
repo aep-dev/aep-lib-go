@@ -87,7 +87,9 @@ func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, pa
 		return nil, err
 	}
 
-	for _, key := range []string{"results", r.Plural, cases.KebabToCamelCase(r.Plural)} {
+	kebab := cases.KebabToCamelCase(r.Plural)
+	lowerKebab := strings.ToLower(string(kebab[0])) + kebab[1:]
+	for _, key := range []string{"results", r.Plural, cases.KebabToCamelCase(r.Plural), lowerKebab} {
 		if val, ok := m[key]; ok {
 			if arr, ok := val.([]interface{}); ok {
 				var result []map[string]interface{}
