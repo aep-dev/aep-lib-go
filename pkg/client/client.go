@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/aep-dev/aep-lib-go/pkg/api"
+	"github.com/aep-dev/aep-lib-go/pkg/cases"
 )
 
 type RequestLoggingFunction func(ctx context.Context, req *http.Request, args ...any)
@@ -65,7 +66,7 @@ func (c *Client) Create(ctx context.Context, r *api.Resource, serverUrl string, 
 	return c.parseResponse(ctx, resp)
 }
 
-func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string) (map[string]interface{}, error) {
+func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string) ([]map[string]interface{}, error) {
 	url, err := basePath(ctx, r, serverUrl, parameters, "")
 	if err != nil {
 		return nil, err
@@ -80,7 +81,27 @@ func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, pa
 	if err != nil {
 		return nil, err
 	}
-	return c.parseResponse(ctx, resp)
+
+	m, err := c.parseResponse(ctx, resp)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range []string{"results", r.Plural, cases.KebabToCamelCase(r.Plural)} {
+		if val, ok := m[key]; ok {
+			if arr, ok := val.([]interface{}); ok {
+				var result []map[string]interface{}
+				for _, v := range arr {
+					if m, ok := v.(map[string]interface{}); ok {
+						result = append(result, m)
+					}
+				}
+				return result, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("no valid list key was found")
 }
 
 func (c *Client) Get(ctx context.Context, serverUrl string, path string) (map[string]interface{}, error) {
