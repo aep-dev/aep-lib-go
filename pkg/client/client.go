@@ -65,6 +65,24 @@ func (c *Client) Create(ctx context.Context, r *api.Resource, serverUrl string, 
 	return c.parseResponse(ctx, resp)
 }
 
+func (c *Client) List(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string) (map[string]interface{}, error) {
+	url, err := basePath(ctx, r, serverUrl, parameters, "")
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.newRequest(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating GET request: %v", err)
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return c.parseResponse(ctx, resp)
+}
+
 func (c *Client) Get(ctx context.Context, serverUrl string, path string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/%s", serverUrl, strings.TrimPrefix(path, "/"))
 
