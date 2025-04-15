@@ -39,6 +39,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 		var r Resource
 		var sRef *openapi.Schema
 		p := getPatternInfo(path)
+		var lroDetails *openapi.XAEPLongRunningOperation
 		if p == nil { // not a resource pattern
 			slog.Debug("path is not a resource", "path", path)
 			continue
@@ -52,8 +53,12 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			}
 			if pathItem.Post != nil {
 				if resp, ok := pathItem.Post.Responses["200"]; ok {
+					lroDetails = pathItem.Post.XAEPLongRunningOperation
 					schema := api.GetSchemaFromResponse(resp)
 					responseSchema := &openapi.Schema{}
+					if lroDetails != nil {
+						schema = lroDetails.Response.Schema
+					}
 					if schema != nil {
 						var err error
 						responseSchema, err = api.DereferenceSchema(*schema)
@@ -70,17 +75,22 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 						return nil, fmt.Errorf("error dereferencing schema %q: %v", schema.Ref, err)
 					}
 					customMethodsByPattern[pattern] = append(customMethodsByPattern[pattern], &CustomMethod{
-						Name:     p.CustomMethodName,
-						Method:   "POST",
-						Request:  requestSchema,
-						Response: responseSchema,
+						Name:          p.CustomMethodName,
+						Method:        "POST",
+						Request:       requestSchema,
+						Response:      responseSchema,
+						IsLongRunning: lroDetails != nil,
 					})
 				}
 			}
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
+					lroDetails = pathItem.Post.XAEPLongRunningOperation
 					schema := api.GetSchemaFromResponse(resp)
 					responseSchema := &openapi.Schema{}
+					if lroDetails != nil {
+						schema = lroDetails.Response.Schema
+					}
 					if schema != nil {
 						var err error
 						responseSchema, err = api.DereferenceSchema(*schema)
@@ -89,16 +99,20 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 						}
 					}
 					customMethodsByPattern[pattern] = append(r.CustomMethods, &CustomMethod{
-						Name:     p.CustomMethodName,
-						Method:   "GET",
-						Response: responseSchema,
+						Name:          p.CustomMethodName,
+						Method:        "GET",
+						Response:      responseSchema,
+						IsLongRunning: lroDetails != nil,
 					})
 				}
 			}
 		} else if p.IsResourcePattern {
 			// treat it like a collection pattern (update, delete, get)
 			if pathItem.Delete != nil {
-				r.DeleteMethod = &DeleteMethod{}
+				lroDetails = pathItem.Delete.XAEPLongRunningOperation
+				r.DeleteMethod = &DeleteMethod{
+					IsLongRunning: lroDetails != nil,
+				}
 			}
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
@@ -107,15 +121,19 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 				}
 			}
 			if pathItem.Patch != nil {
+				lroDetails = pathItem.Patch.XAEPLongRunningOperation
 				if resp, ok := pathItem.Patch.Responses["200"]; ok {
 					sRef = api.GetSchemaFromResponse(resp)
-					r.UpdateMethod = &UpdateMethod{}
+					r.UpdateMethod = &UpdateMethod{
+						IsLongRunning: lroDetails != nil,
+					}
 				}
 			}
 		} else {
 			// create method
 			if pathItem.Post != nil {
 				// check if there is a query parameter "id"
+				lroDetails = pathItem.Post.XAEPLongRunningOperation
 				if resp, ok := pathItem.Post.Responses["200"]; ok {
 					sRef = api.GetSchemaFromResponse(resp)
 					supportsUserSettableCreate := false
@@ -125,7 +143,10 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 							break
 						}
 					}
-					r.CreateMethod = &CreateMethod{SupportsUserSettableCreate: supportsUserSettableCreate}
+					r.CreateMethod = &CreateMethod{
+						SupportsUserSettableCreate: supportsUserSettableCreate,
+						IsLongRunning:              lroDetails != nil,
+					}
 				}
 			}
 			// list method
@@ -166,6 +187,9 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 					}
 				}
 			}
+		}
+		if lroDetails != nil {
+			sRef = lroDetails.Response.Schema
 		}
 		if sRef != nil {
 			// s should always be a reference to a schema in the components section.
@@ -324,6 +348,7 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 			Singular:     singular,
 			Parents:      []*Resource{},
 			Children:     []*Resource{},
+			Plural:       plural(singular),
 		}
 	}
 	resourceBySingular[singular] = r
@@ -357,4 +382,11 @@ func getContact(contact openapi.Contact) *Contact {
 		}
 	}
 	return nil
+}
+
+// plural returns the plural form of a singular resource name
+// This is a simple implementation that just adds 's' to the end
+// of the singular form, which works for most cases.
+func plural(singular string) string {
+	return singular + "s"
 }

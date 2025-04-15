@@ -29,9 +29,17 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		Schemas: map[string]openapi.Schema{},
 	}
 	for _, r := range api.Resources {
+		// Ensure r.Schema is not nil before dereferencing
+		if r.Schema == nil {
+			return nil, fmt.Errorf("schema for resource %s is nil", r.Singular)
+		}
 		d := r.Schema
 		// if it is a resource, add paths
 		collection, parentPWPS := generateParentPatternsWithParams(r)
+		// Ensure parentPWPS is not nil before dereferencing
+		if parentPWPS == nil {
+			return nil, fmt.Errorf("parent patterns for resource %s are nil", r.Singular)
+		}
 		// add an empty PathWithParam, if there are no parents.
 		// This will add paths for the simple resource case.
 		if len(*parentPWPS) == 0 {
@@ -41,15 +49,16 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		}
 		patterns := []string{}
 		schemaRef := fmt.Sprintf("#/components/schemas/%v", r.Singular)
+		resourceSchema := &openapi.Schema{
+			Ref: schemaRef,
+		}
 		singular := r.Singular
 		// declare some commonly used objects, to be used later.
 		bodyParam := openapi.RequestBody{
 			Required: true,
 			Content: map[string]openapi.MediaType{
 				"application/json": {
-					Schema: &openapi.Schema{
-						Ref: schemaRef,
-					},
+					Schema: resourceSchema,
 				},
 			},
 		}
@@ -65,9 +74,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			Description: "Successful response",
 			Content: map[string]openapi.MediaType{
 				"application/json": {
-					Schema: &openapi.Schema{
-						Ref: schemaRef,
-					},
+					Schema: resourceSchema,
 				},
 			},
 		}
@@ -78,10 +85,8 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				listPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				responseProperties := map[string]openapi.Schema{
 					constants.FIELD_RESULTS_NAME: {
-						Type: "array",
-						Items: &openapi.Schema{
-							Ref: schemaRef,
-						},
+						Type:  "array",
+						Items: resourceSchema,
 					},
 					constants.FIELD_NEXT_PAGE_TOKEN_NAME: {
 						Type: "string",
@@ -134,7 +139,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					})
 				}
-				addMethodToPath(paths, listPath, "get", openapi.Operation{
+				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("List%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("List method for %s", r.Singular),
 					Parameters:  params,
@@ -151,7 +156,8 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							},
 						},
 					},
-				})
+				}
+				addMethodToPath(paths, listPath, "get", methodInfo)
 			}
 			if r.CreateMethod != nil {
 				createPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
@@ -166,7 +172,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					})
 				}
-				addMethodToPath(paths, createPath, "post", openapi.Operation{
+				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Create%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Create method for %s", r.Singular),
 					Parameters:  params,
@@ -174,20 +180,41 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					Responses: map[string]openapi.Response{
 						"200": resourceResponse,
 					},
-				})
+				}
+				if r.CreateMethod.IsLongRunning {
+					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
+						Response: openapi.XAEPLongRunningOperationResponse{
+							Schema: resourceSchema,
+						},
+					}
+					methodInfo.Responses = map[string]openapi.Response{
+						"200": {
+							Description: "Long-running operation response",
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{
+										Ref: "//aep.dev/json-schema/type/operation.json",
+									},
+								},
+							},
+						},
+					}
+				}
+				addMethodToPath(paths, createPath, "post", methodInfo)
 			}
 			if r.GetMethod != nil {
-				addMethodToPath(paths, resourcePath, "get", openapi.Operation{
+				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Get%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Get method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
 						"200": resourceResponse,
 					},
-				})
+				}
+				addMethodToPath(paths, resourcePath, "get", methodInfo)
 			}
 			if r.UpdateMethod != nil {
-				addMethodToPath(paths, resourcePath, "patch", openapi.Operation{
+				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Update%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Update method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
@@ -213,9 +240,30 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							},
 						},
 					},
-				})
+				}
+				if r.UpdateMethod.IsLongRunning {
+					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
+						Response: openapi.XAEPLongRunningOperationResponse{
+							Schema: resourceSchema,
+						},
+					}
+					methodInfo.Responses = map[string]openapi.Response{
+						"200": {
+							Description: "Long-running operation response",
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{
+										Ref: "//aep.dev/json-schema/type/operation.json",
+									},
+								},
+							},
+						},
+					}
+				}
+				addMethodToPath(paths, resourcePath, "patch", methodInfo)
 			}
 			if r.DeleteMethod != nil {
+				responseSchema := &openapi.Schema{}
 				params := append(pwp.Params, idParam)
 				if len(r.Children) > 0 {
 					params = append(params, openapi.Parameter{
@@ -227,7 +275,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					})
 				}
-				addMethodToPath(paths, resourcePath, "delete", openapi.Operation{
+				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Delete%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Delete method for %s", r.Singular),
 					Parameters:  params,
@@ -236,15 +284,35 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Description: "Successful response",
 							Content: map[string]openapi.MediaType{
 								"application/json": {
-									Schema: &openapi.Schema{},
+									Schema: responseSchema,
 								},
 							},
 						},
 					},
-				})
+				}
+				if r.DeleteMethod.IsLongRunning {
+					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
+						Response: openapi.XAEPLongRunningOperationResponse{
+							Schema: responseSchema,
+						},
+					}
+					methodInfo.Responses = map[string]openapi.Response{
+						"200": {
+							Description: "Long-running operation response",
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{
+										Ref: "//aep.dev/json-schema/type/operation.json",
+									},
+								},
+							},
+						},
+					}
+				}
+				addMethodToPath(paths, resourcePath, "delete", methodInfo)
 			}
 			if r.ApplyMethod != nil {
-				addMethodToPath(paths, resourcePath, "put", openapi.Operation{
+				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Apply%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Apply method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
@@ -252,9 +320,40 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					Responses: map[string]openapi.Response{
 						"200": resourceResponse,
 					},
-				})
+				}
+				if r.ApplyMethod.IsLongRunning {
+					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
+						Response: openapi.XAEPLongRunningOperationResponse{
+							Schema: resourceSchema,
+						},
+					}
+					methodInfo.Responses = map[string]openapi.Response{
+						"200": {
+							Description: "Long-running operation response",
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{
+										Ref: "//aep.dev/json-schema/type/operation.json",
+									},
+								},
+							},
+						},
+					}
+				}
+				addMethodToPath(paths, resourcePath, "put", methodInfo)
 			}
 			for _, custom := range r.CustomMethods {
+				// Ensure custom.Response and custom.Request are not nil
+				if custom.Response == nil {
+					custom.Response = &openapi.Schema{
+						Type: "object",
+					}
+				}
+				if custom.Request == nil {
+					custom.Request = &openapi.Schema{
+						Type: "object",
+					}
+				}
 				methodType := "get"
 				if custom.Method == "POST" {
 					methodType = "post"
@@ -281,6 +380,26 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						Content: map[string]openapi.MediaType{
 							"application/json": {
 								Schema: custom.Request,
+							},
+						},
+					}
+				}
+				// Ensure the response schema for long-running operations is correctly set
+				if custom.IsLongRunning {
+					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
+						Response: openapi.XAEPLongRunningOperationResponse{
+							Schema: custom.Response,
+						},
+					}
+					methodInfo.Responses = map[string]openapi.Response{
+						"200": {
+							Description: "Long-running operation response",
+							Content: map[string]openapi.MediaType{
+								"application/json": {
+									Schema: &openapi.Schema{
+										Ref: "//aep.dev/json-schema/type/operation.json",
+									},
+								},
 							},
 						},
 					}

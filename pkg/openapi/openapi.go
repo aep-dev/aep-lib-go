@@ -39,7 +39,9 @@ func (o *OpenAPI) OASVersion() string {
 }
 
 func (o *OpenAPI) DereferenceSchema(schema Schema) (*Schema, error) {
-	if schema.Ref != "" {
+	// we dereference only local schemas for now.
+	// TODO: add support for external schemas (prefixed by //)
+	if schema.Ref != "" && strings.HasPrefix(schema.Ref, "#components/schema") {
 		parts := strings.Split(schema.Ref, "/")
 		key := parts[len(parts)-1]
 		var childSchema Schema
@@ -116,12 +118,13 @@ type PathItem struct {
 }
 
 type Operation struct {
-	Summary     string              `json:"summary,omitempty"`
-	Description string              `json:"description,omitempty"`
-	OperationID string              `json:"operationId,omitempty"`
-	Parameters  []Parameter         `json:"parameters,omitempty"`
-	Responses   map[string]Response `json:"responses,omitempty"`
-	RequestBody *RequestBody        `json:"requestBody,omitempty"`
+	Summary                  string                    `json:"summary,omitempty"`
+	Description              string                    `json:"description,omitempty"`
+	OperationID              string                    `json:"operationId,omitempty"`
+	Parameters               []Parameter               `json:"parameters,omitempty"`
+	Responses                map[string]Response       `json:"responses,omitempty"`
+	RequestBody              *RequestBody              `json:"requestBody,omitempty"`
+	XAEPLongRunningOperation *XAEPLongRunningOperation `json:"x-aep-long-running-operation,omitempty"`
 }
 
 type Parameter struct {
@@ -132,10 +135,6 @@ type Parameter struct {
 	Schema          *Schema          `json:"schema,omitempty"`
 	Type            string           `json:"type,omitempty"`
 	XAEPResourceRef *XAEPResourceRef `json:"x-aep-resource-reference,omitempty"`
-}
-
-type XAEPResourceRef struct {
-	Resource string `json:"resource,omitempty"`
 }
 
 type Response struct {
@@ -181,6 +180,18 @@ type XAEPResource struct {
 	Plural   string   `json:"plural,omitempty"`
 	Patterns []string `json:"patterns,omitempty"`
 	Parents  []string `json:"parents,omitempty"`
+}
+
+type XAEPResourceRef struct {
+	Resource string `json:"resource,omitempty"`
+}
+
+type XAEPLongRunningOperation struct {
+	Response XAEPLongRunningOperationResponse `json:"response,omitempty"`
+}
+
+type XAEPLongRunningOperationResponse struct {
+	Schema *Schema `json:"schema,omitempty"`
 }
 
 func FetchOpenAPI(pathOrURL string) (*OpenAPI, error) {

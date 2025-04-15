@@ -24,15 +24,18 @@ type Resource struct {
 
 type CreateMethod struct {
 	SupportsUserSettableCreate bool
+	IsLongRunning              bool
 }
 
 type ApplyMethod struct {
+	IsLongRunning bool
 }
 
 type GetMethod struct {
 }
 
 type UpdateMethod struct {
+	IsLongRunning bool
 }
 
 type ListMethod struct {
@@ -42,13 +45,15 @@ type ListMethod struct {
 }
 
 type DeleteMethod struct {
+	IsLongRunning bool
 }
 
 type CustomMethod struct {
-	Name     string
-	Method   string
-	Request  *openapi.Schema
-	Response *openapi.Schema
+	Name          string
+	Method        string
+	Request       *openapi.Schema
+	Response      *openapi.Schema
+	IsLongRunning bool
 }
 
 func (r *Resource) GetPattern() string {

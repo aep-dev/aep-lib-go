@@ -409,6 +409,144 @@ func TestGetAPI(t *testing.T) {
 				assert.Equal(t, "https://example.com", sd.Contact.URL)
 			},
 		},
+		{
+			name: "resource with long running operations",
+			api: &openapi.OpenAPI{
+				OpenAPI: "3.1.0",
+				Servers: []openapi.Server{{URL: "https://api.example.com"}},
+				Paths: map[string]*openapi.PathItem{
+					"/widgets": {
+						Post: &openapi.Operation{
+							XAEPLongRunningOperation: &openapi.XAEPLongRunningOperation{
+								Response: openapi.XAEPLongRunningOperationResponse{
+									Schema: &openapi.Schema{
+										Ref: "#/components/schemas/Widget",
+									},
+								},
+							},
+							Responses: map[string]openapi.Response{
+								"200": {
+									Content: map[string]openapi.MediaType{
+										"application/json": {
+											Schema: &openapi.Schema{
+												Ref: "//aep.dev/json-schema/type/operation.json",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"/widgets/{widget}": {
+						Get: &openapi.Operation{
+							Responses: map[string]openapi.Response{
+								"200": {
+									Content: map[string]openapi.MediaType{
+										"application/json": {
+											Schema: &openapi.Schema{
+												Ref: "#/components/schemas/Widget",
+											},
+										},
+									},
+								},
+							},
+						},
+						Delete: &openapi.Operation{
+							XAEPLongRunningOperation: &openapi.XAEPLongRunningOperation{
+								Response: openapi.XAEPLongRunningOperationResponse{
+									Schema: &openapi.Schema{
+										Ref: "#/components/schemas/Widget",
+									},
+								},
+							},
+						},
+						Patch: &openapi.Operation{
+							XAEPLongRunningOperation: &openapi.XAEPLongRunningOperation{
+								Response: openapi.XAEPLongRunningOperationResponse{
+									Schema: &openapi.Schema{
+										Ref: "#/components/schemas/Widget",
+									},
+								},
+							},
+							Responses: map[string]openapi.Response{
+								"200": {
+									Content: map[string]openapi.MediaType{
+										"application/json": {
+											Schema: &openapi.Schema{
+												Ref: "//aep.dev/json-schema/type/operation.json",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"/widgets/{widget}:customOp": {
+						Post: &openapi.Operation{
+							XAEPLongRunningOperation: &openapi.XAEPLongRunningOperation{
+								Response: openapi.XAEPLongRunningOperationResponse{
+									Schema: &openapi.Schema{
+										Ref: "#/components/schemas/Widget",
+									},
+								},
+							},
+							RequestBody: &openapi.RequestBody{
+								Content: map[string]openapi.MediaType{
+									"application/json": {
+										Schema: &openapi.Schema{
+											Type: "object",
+										},
+									},
+								},
+							},
+							Responses: map[string]openapi.Response{
+								"200": {
+									Content: map[string]openapi.MediaType{
+										"application/json": {
+											Schema: &openapi.Schema{
+												Ref: "//aep.dev/json-schema/type/operation.json",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Components: openapi.Components{
+					Schemas: map[string]openapi.Schema{
+						"Widget": {
+							Type: "object",
+							Properties: map[string]openapi.Schema{
+								"name": {Type: "string"},
+							},
+						},
+					},
+				},
+			},
+			validateResult: func(t *testing.T, sd *API) {
+				widget, ok := sd.Resources["widget"]
+				assert.True(t, ok, "widget resource should exist")
+
+				// Check create method is marked as long running
+				assert.NotNil(t, widget.CreateMethod, "should have CREATE method")
+				assert.True(t, widget.CreateMethod.IsLongRunning, "CREATE method should be marked as long running")
+
+				// Check update method is marked as long running
+				assert.NotNil(t, widget.UpdateMethod, "should have UPDATE method")
+				assert.True(t, widget.UpdateMethod.IsLongRunning, "UPDATE method should be marked as long running")
+
+				// Check delete method is marked as long running
+				assert.NotNil(t, widget.DeleteMethod, "should have DELETE method")
+				assert.True(t, widget.DeleteMethod.IsLongRunning, "DELETE method should be marked as long running")
+
+				// Check custom method is marked as long running
+				assert.NotEmpty(t, widget.CustomMethods, "should have custom methods")
+				customOp := widget.CustomMethods[0]
+				assert.Equal(t, "customOp", customOp.Name, "should have customOp method")
+				assert.True(t, customOp.IsLongRunning, "customOp method should be marked as long running")
+			},
+		},
 	}
 
 	for _, tt := range tests {
