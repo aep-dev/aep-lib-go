@@ -157,16 +157,16 @@ type MediaType struct {
 }
 
 type Schema struct {
-	Type             string         `json:"type,omitempty"`
-	Format           string         `json:"format,omitempty"`
-	Items            *Schema        `json:"items,omitempty"`
-	Properties       Properties     `json:"properties,omitempty"`
-	Ref              string         `json:"$ref,omitempty"`
-	XAEPResource     *XAEPResource  `json:"x-aep-resource,omitempty"`
-	XAEPFieldNumbers map[int]string `json:"x-aep-field-numbers,omitempty"`
-	ReadOnly         bool           `json:"readOnly,omitempty"`
-	Required         []string       `json:"required,omitempty"`
-	Description      string         `json:"description,omitempty"`
+	Type            string        `json:"type,omitempty"`
+	Format          string        `json:"format,omitempty"`
+	Items           *Schema       `json:"items,omitempty"`
+	Properties      Properties    `json:"properties,omitempty"`
+	Ref             string        `json:"$ref,omitempty"`
+	XAEPResource    *XAEPResource `json:"x-aep-resource,omitempty"`
+	XAEPFieldNumber int           `json:"x-aep-field-number,omitempty"`
+	ReadOnly        bool          `json:"readOnly,omitempty"`
+	Required        []string      `json:"required,omitempty"`
+	Description     string        `json:"description,omitempty"`
 }
 
 type Properties map[string]Schema

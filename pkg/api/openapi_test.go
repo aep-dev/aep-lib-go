@@ -10,96 +10,7 @@ import (
 )
 
 func TestToOpenAPI(t *testing.T) {
-	// Common example API used across tests
-	publisher := &Resource{
-		Singular: "publisher",
-		Plural:   "publishers",
-		Schema: &openapi.Schema{
-			Type: "object",
-			Properties: map[string]openapi.Schema{
-				"title": {Type: "string"},
-				"id":    {Type: "string"},
-			},
-		},
-		ListMethod: &ListMethod{},
-		GetMethod:  &GetMethod{},
-		CreateMethod: &CreateMethod{
-			SupportsUserSettableCreate: true,
-		},
-	}
-	book := &Resource{
-		Singular: "book",
-		Plural:   "books",
-		Parents:  []*Resource{publisher},
-		Schema: &openapi.Schema{
-			Type: "object",
-			Properties: map[string]openapi.Schema{
-				"name": {Type: "string"},
-				"id":   {Type: "string"},
-			},
-		},
-		ListMethod: &ListMethod{
-			HasUnreachableResources: true,
-			SupportsFilter:          true,
-			SupportsSkip:            true,
-		},
-		GetMethod: &GetMethod{},
-		CreateMethod: &CreateMethod{
-			SupportsUserSettableCreate: true,
-		},
-		UpdateMethod: &UpdateMethod{},
-		DeleteMethod: &DeleteMethod{},
-		CustomMethods: []*CustomMethod{
-			{
-				Name:   "archive",
-				Method: "POST",
-				Request: &openapi.Schema{
-					Type:       "object",
-					Properties: map[string]openapi.Schema{},
-				},
-				Response: &openapi.Schema{
-					Type: "object",
-					Properties: map[string]openapi.Schema{
-						"archived": {Type: "boolean"},
-					},
-				},
-			},
-		},
-	}
-	publisher.Children = append(publisher.Children, book)
-	bookEdition := &Resource{
-		Singular: "book-edition",
-		Plural:   "book-editions",
-		Parents:  []*Resource{book},
-		Schema: &openapi.Schema{
-			Type: "object",
-			Properties: map[string]openapi.Schema{
-				"date": {Type: "string"},
-			},
-		},
-		ListMethod: &ListMethod{},
-		GetMethod:  &GetMethod{},
-	}
-	book.Children = append(book.Children, bookEdition)
-	exampleAPI := &API{
-		Name:      "Test API",
-		ServerURL: "https://api.example.com",
-		Contact: &Contact{
-			Name:  "John Doe",
-			Email: "john.doe@example.com",
-			URL:   "https://example.com",
-		},
-		Schemas: map[string]*openapi.Schema{
-			"account": {
-				Type: "object",
-			},
-		},
-		Resources: map[string]*Resource{
-			"book":         book,
-			"book-edition": bookEdition,
-			"publisher":    publisher,
-		},
-	}
+	exampleAPI := ExampleAPI()
 	tests := []struct {
 		name                string
 		api                 *API
@@ -255,7 +166,10 @@ func TestToOpenAPI(t *testing.T) {
 										Schema: &openapi.Schema{
 											Type: "object",
 											Properties: map[string]openapi.Schema{
-												"archived": {Type: "boolean"},
+												"archived": {
+													Type:            "boolean",
+													XAEPFieldNumber: 1,
+												},
 											},
 										},
 									},
@@ -649,17 +563,19 @@ func TestLongRunningMethods(t *testing.T) {
 				"name": {Type: "string"},
 			},
 		},
-		CreateMethod: &CreateMethod{
-			IsLongRunning: true,
-		},
-		ApplyMethod: &ApplyMethod{
-			IsLongRunning: true,
-		},
-		UpdateMethod: &UpdateMethod{
-			IsLongRunning: true,
-		},
-		DeleteMethod: &DeleteMethod{
-			IsLongRunning: true,
+		Methods: Methods{
+			Create: &CreateMethod{
+				IsLongRunning: true,
+			},
+			Apply: &ApplyMethod{
+				IsLongRunning: true,
+			},
+			Update: &UpdateMethod{
+				IsLongRunning: true,
+			},
+			Delete: &DeleteMethod{
+				IsLongRunning: true,
+			},
 		},
 	}
 

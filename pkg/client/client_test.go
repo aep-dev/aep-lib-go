@@ -17,8 +17,10 @@ func TestCreate(t *testing.T) {
 
 	// Create a test resource
 	r := &api.Resource{
-		CreateMethod: &api.CreateMethod{
-			SupportsUserSettableCreate: false,
+		Methods: api.Methods{
+			Create: &api.CreateMethod{
+				SupportsUserSettableCreate: false,
+			},
 		},
 		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
 	}
@@ -57,8 +59,10 @@ func TestCreateWithUserSpecifiedId(t *testing.T) {
 
 	// Create a test resource
 	r := &api.Resource{
-		CreateMethod: &api.CreateMethod{
-			SupportsUserSettableCreate: true,
+		Methods: api.Methods{
+			Create: &api.CreateMethod{
+				SupportsUserSettableCreate: true,
+			},
 		},
 		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
 	}
@@ -159,8 +163,10 @@ func TestList(t *testing.T) {
 
 	// Create a test resource
 	r := &api.Resource{
-		CreateMethod: &api.CreateMethod{
-			SupportsUserSettableCreate: false,
+		Methods: api.Methods{
+			Create: &api.CreateMethod{
+				SupportsUserSettableCreate: false,
+			},
 		},
 		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
 	}

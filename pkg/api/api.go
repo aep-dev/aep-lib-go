@@ -11,7 +11,7 @@ import (
 )
 
 type API struct {
-	ServerURL string
+	ServerURL string `json:"server_url"`
 	Name      string
 	Contact   *Contact
 	Schemas   map[string]*openapi.Schema
@@ -110,21 +110,21 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			// treat it like a collection pattern (update, delete, get)
 			if pathItem.Delete != nil {
 				lroDetails = pathItem.Delete.XAEPLongRunningOperation
-				r.DeleteMethod = &DeleteMethod{
+				r.Methods.Delete = &DeleteMethod{
 					IsLongRunning: lroDetails != nil,
 				}
 			}
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
 					sRef = api.GetSchemaFromResponse(resp)
-					r.GetMethod = &GetMethod{}
+					r.Methods.Get = &GetMethod{}
 				}
 			}
 			if pathItem.Patch != nil {
 				lroDetails = pathItem.Patch.XAEPLongRunningOperation
 				if resp, ok := pathItem.Patch.Responses["200"]; ok {
 					sRef = api.GetSchemaFromResponse(resp)
-					r.UpdateMethod = &UpdateMethod{
+					r.Methods.Update = &UpdateMethod{
 						IsLongRunning: lroDetails != nil,
 					}
 				}
@@ -143,7 +143,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 							break
 						}
 					}
-					r.CreateMethod = &CreateMethod{
+					r.Methods.Create = &CreateMethod{
 						SupportsUserSettableCreate: supportsUserSettableCreate,
 						IsLongRunning:              lroDetails != nil,
 					}
@@ -164,7 +164,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 						for _, property := range resolvedSchema.Properties {
 							if property.Type == "array" {
 								sRef = property.Items
-								r.ListMethod = &ListMethod{}
+								r.Methods.List = &ListMethod{}
 								found = true
 								break
 							}
@@ -172,13 +172,13 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 						if found {
 							for _, param := range pathItem.Get.Parameters {
 								if param.Name == constants.FIELD_SKIP_NAME {
-									r.ListMethod.SupportsSkip = true
+									r.Methods.List.SupportsSkip = true
 								}
 								if param.Name == constants.FIELD_UNREACHABLE_NAME {
-									r.ListMethod.HasUnreachableResources = true
+									r.Methods.List.HasUnreachableResources = true
 								}
 								if param.Name == constants.FIELD_FILTER_NAME {
-									r.ListMethod.SupportsFilter = true
+									r.Methods.List.SupportsFilter = true
 								}
 							}
 						} else {
@@ -356,20 +356,20 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 }
 
 func foldResourceMethods(from, into *Resource) {
-	if from.GetMethod != nil {
-		into.GetMethod = from.GetMethod
+	if from.Methods.Get != nil {
+		into.Methods.Get = from.Methods.Get
 	}
-	if from.ListMethod != nil {
-		into.ListMethod = from.ListMethod
+	if from.Methods.List != nil {
+		into.Methods.List = from.Methods.List
 	}
-	if from.CreateMethod != nil {
-		into.CreateMethod = from.CreateMethod
+	if from.Methods.Create != nil {
+		into.Methods.Create = from.Methods.Create
 	}
-	if from.UpdateMethod != nil {
-		into.UpdateMethod = from.UpdateMethod
+	if from.Methods.Update != nil {
+		into.Methods.Update = from.Methods.Update
 	}
-	if from.DeleteMethod != nil {
-		into.DeleteMethod = from.DeleteMethod
+	if from.Methods.Delete != nil {
+		into.Methods.Delete = from.Methods.Delete
 	}
 }
 

@@ -177,14 +177,14 @@ func TestGetAPI(t *testing.T) {
 				assert.True(t, ok, "widget resource should exist")
 				assert.Equal(t, widget.PatternElems, []string{"widgets", "{widget}"})
 				assert.Equal(t, sd.ServerURL, "https://api.example.com")
-				assert.NotNil(t, widget.GetMethod, "should have GET method")
-				assert.NotNil(t, widget.ListMethod, "should have LIST method")
-				assert.NotNil(t, widget.CreateMethod, "should have CREATE method")
-				if widget.CreateMethod != nil {
-					assert.False(t, widget.CreateMethod.SupportsUserSettableCreate, "should not support user-settable create")
+				assert.NotNil(t, widget.Methods.Get, "should have GET method")
+				assert.NotNil(t, widget.Methods.List, "should have LIST method")
+				assert.NotNil(t, widget.Methods.Create, "should have CREATE method")
+				if widget.Methods.Create != nil {
+					assert.False(t, widget.Methods.Create.SupportsUserSettableCreate, "should not support user-settable create")
 				}
-				assert.NotNil(t, widget.UpdateMethod, "should have UPDATE method")
-				assert.NotNil(t, widget.DeleteMethod, "should have DELETE method")
+				assert.NotNil(t, widget.Methods.Update, "should have UPDATE method")
+				assert.NotNil(t, widget.Methods.Delete, "should have DELETE method")
 			},
 		},
 		{
@@ -293,7 +293,7 @@ func TestGetAPI(t *testing.T) {
 			validateResult: func(t *testing.T, sd *API) {
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
-				assert.True(t, widget.CreateMethod.SupportsUserSettableCreate,
+				assert.True(t, widget.Methods.Create.SupportsUserSettableCreate,
 					"should support user-settable create")
 			},
 		},
@@ -327,7 +327,7 @@ func TestGetAPI(t *testing.T) {
 			validateResult: func(t *testing.T, sd *API) {
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
-				assert.NotNil(t, widget.GetMethod, "should have GET method")
+				assert.NotNil(t, widget.Methods.Get, "should have GET method")
 				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems)
 			},
 		},
@@ -395,9 +395,9 @@ func TestGetAPI(t *testing.T) {
 			validateResult: func(t *testing.T, sd *API) {
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
-				assert.NotNil(t, widget.ListMethod, "should have LIST method")
-				assert.True(t, widget.ListMethod.SupportsSkip, "should support skip parameter")
-				assert.True(t, widget.ListMethod.HasUnreachableResources, "should support unreachable parameter")
+				assert.NotNil(t, widget.Methods.List, "should have LIST method")
+				assert.True(t, widget.Methods.List.SupportsSkip, "should support skip parameter")
+				assert.True(t, widget.Methods.List.HasUnreachableResources, "should support unreachable parameter")
 			},
 		},
 		{
@@ -529,16 +529,16 @@ func TestGetAPI(t *testing.T) {
 				assert.True(t, ok, "widget resource should exist")
 
 				// Check create method is marked as long running
-				assert.NotNil(t, widget.CreateMethod, "should have CREATE method")
-				assert.True(t, widget.CreateMethod.IsLongRunning, "CREATE method should be marked as long running")
+				assert.NotNil(t, widget.Methods.Create, "should have CREATE method")
+				assert.True(t, widget.Methods.Create.IsLongRunning, "CREATE method should be marked as long running")
 
 				// Check update method is marked as long running
-				assert.NotNil(t, widget.UpdateMethod, "should have UPDATE method")
-				assert.True(t, widget.UpdateMethod.IsLongRunning, "UPDATE method should be marked as long running")
+				assert.NotNil(t, widget.Methods.Update, "should have UPDATE method")
+				assert.True(t, widget.Methods.Update.IsLongRunning, "UPDATE method should be marked as long running")
 
 				// Check delete method is marked as long running
-				assert.NotNil(t, widget.DeleteMethod, "should have DELETE method")
-				assert.True(t, widget.DeleteMethod.IsLongRunning, "DELETE method should be marked as long running")
+				assert.NotNil(t, widget.Methods.Delete, "should have DELETE method")
+				assert.True(t, widget.Methods.Delete.IsLongRunning, "DELETE method should be marked as long running")
 
 				// Check custom method is marked as long running
 				assert.NotEmpty(t, widget.CustomMethods, "should have custom methods")

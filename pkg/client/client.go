@@ -34,7 +34,7 @@ func NewClient(c *http.Client) *Client {
 
 func (c *Client) Create(ctx context.Context, r *api.Resource, serverUrl string, body map[string]interface{}, parameters map[string]string) (map[string]interface{}, error) {
 	suffix := ""
-	if r.CreateMethod != nil && r.CreateMethod.SupportsUserSettableCreate {
+	if r.Methods.Create != nil && r.Methods.Create.SupportsUserSettableCreate {
 		id, ok := body["id"]
 		if !ok {
 			return nil, fmt.Errorf("id field not found in %v", body)

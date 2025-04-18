@@ -81,7 +81,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		for _, pwp := range *parentPWPS {
 			resourcePath := fmt.Sprintf("%s%s/{%s}", pwp.Pattern, collection, singular)
 			patterns = append(patterns, resourcePath[1:])
-			if r.ListMethod != nil {
+			if r.Methods.List != nil {
 				listPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				responseProperties := map[string]openapi.Schema{
 					constants.FIELD_RESULTS_NAME: {
@@ -92,7 +92,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						Type: "string",
 					},
 				}
-				if r.ListMethod.HasUnreachableResources {
+				if r.Methods.List.HasUnreachableResources {
 					responseProperties[constants.FIELD_UNREACHABLE_NAME] = openapi.Schema{
 						Type: "array",
 						Items: &openapi.Schema{
@@ -119,7 +119,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					},
 				)
 
-				if r.ListMethod.SupportsSkip {
+				if r.Methods.List.SupportsSkip {
 					params = append(params, openapi.Parameter{
 						In:       "query",
 						Name:     constants.FIELD_SKIP_NAME,
@@ -129,7 +129,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					})
 				}
-				if r.ListMethod.SupportsFilter {
+				if r.Methods.List.SupportsFilter {
 					params = append(params, openapi.Parameter{
 						In:       "query",
 						Name:     constants.FIELD_FILTER_NAME,
@@ -159,10 +159,10 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				addMethodToPath(paths, listPath, "get", methodInfo)
 			}
-			if r.CreateMethod != nil {
+			if r.Methods.Create != nil {
 				createPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
 				params := pwp.Params
-				if r.CreateMethod.SupportsUserSettableCreate {
+				if r.Methods.Create.SupportsUserSettableCreate {
 					params = append(params, openapi.Parameter{
 						In:       "query",
 						Name:     "id",
@@ -181,7 +181,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						"200": resourceResponse,
 					},
 				}
-				if r.CreateMethod.IsLongRunning {
+				if r.Methods.Create.IsLongRunning {
 					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
 						Response: openapi.XAEPLongRunningOperationResponse{
 							Schema: resourceSchema,
@@ -202,7 +202,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				addMethodToPath(paths, createPath, "post", methodInfo)
 			}
-			if r.GetMethod != nil {
+			if r.Methods.Get != nil {
 				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Get%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Get method for %s", r.Singular),
@@ -213,7 +213,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				addMethodToPath(paths, resourcePath, "get", methodInfo)
 			}
-			if r.UpdateMethod != nil {
+			if r.Methods.Update != nil {
 				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Update%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Update method for %s", r.Singular),
@@ -241,7 +241,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					},
 				}
-				if r.UpdateMethod.IsLongRunning {
+				if r.Methods.Update.IsLongRunning {
 					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
 						Response: openapi.XAEPLongRunningOperationResponse{
 							Schema: resourceSchema,
@@ -262,7 +262,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				addMethodToPath(paths, resourcePath, "patch", methodInfo)
 			}
-			if r.DeleteMethod != nil {
+			if r.Methods.Delete != nil {
 				responseSchema := &openapi.Schema{}
 				params := append(pwp.Params, idParam)
 				if len(r.Children) > 0 {
@@ -290,7 +290,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						},
 					},
 				}
-				if r.DeleteMethod.IsLongRunning {
+				if r.Methods.Delete.IsLongRunning {
 					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
 						Response: openapi.XAEPLongRunningOperationResponse{
 							Schema: responseSchema,
@@ -311,7 +311,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				addMethodToPath(paths, resourcePath, "delete", methodInfo)
 			}
-			if r.ApplyMethod != nil {
+			if r.Methods.Apply != nil {
 				methodInfo := openapi.Operation{
 					OperationID: fmt.Sprintf("Apply%s", cases.KebabToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Apply method for %s", r.Singular),
@@ -321,7 +321,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						"200": resourceResponse,
 					},
 				}
-				if r.ApplyMethod.IsLongRunning {
+				if r.Methods.Apply.IsLongRunning {
 					methodInfo.XAEPLongRunningOperation = &openapi.XAEPLongRunningOperation{
 						Response: openapi.XAEPLongRunningOperationResponse{
 							Schema: resourceSchema,

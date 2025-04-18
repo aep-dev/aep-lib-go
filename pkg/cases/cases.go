@@ -2,7 +2,17 @@ package cases
 
 import (
 	"strings"
+
+	"golang.org/x/text/cases"
+	xcases "golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
+
+var capitalizer cases.Caser
+
+func init() {
+	capitalizer = xcases.Title(language.AmericanEnglish)
+}
 
 func PascalCaseToKebabCase(s string) string {
 	// a uppercase char is a sign of a deiimiter
@@ -60,4 +70,8 @@ func KebabToSnakeCase(s string) string {
 
 func UpperFirst(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func Capitalize(s string) string {
+	return capitalizer.String(s)
 }

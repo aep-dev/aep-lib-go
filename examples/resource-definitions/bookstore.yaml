@@ -1,0 +1,109 @@
+# normally this would be suffixed with the domain (.com)
+name: "bookstore.example.com"
+server_url: "http://localhost:8081"
+contact:
+  name: "API support"
+  email: "aepsupport@aep.dev"
+resources:
+  # example of a simple resource
+  - &publisher
+    kind: "publisher"
+    plural: "publishers"
+    schema:
+      properties:
+        description:
+          type: string
+          x-aep-field-number: 1
+    methods:
+      create: {}
+      read: {}
+      update: {}
+      delete: {}
+      list:
+        supports_filter: true
+        supports_skip: true
+      apply: {}
+  # example of a child resource
+  - &book
+    kind: "book"
+    plural: "books"
+    # the parents should specify the parents of the resource. It takes in the
+    # kind.
+    parents:
+      - *publisher
+    properties:
+      required: ["author", "edition", "isbn", "price", "published"]
+      isbn:
+        type: array
+        items:
+          type: string
+        x-aep-field-number: 1
+      price:
+        type: number
+        x-aep-field-number: 2
+      published:
+        type: boolean
+        x-aep-field-number: 3
+      edition:
+        type: integer
+        x-aep-field-number: 4
+      author:
+        type: array
+        items:
+          properties:
+            firstName:
+              type: string
+              x-aep-field-number: 1
+            lastName:
+              type: string
+              x-aep-field-number: 2
+    methods:
+      create: {}
+      read: {}
+      update: {}
+      delete: {}
+      list:
+        has_unreachable_resources: true
+      apply: {}
+    custom_methods:
+      - name: "archive"
+        method_type: POST
+        request:
+          type: object
+          properties: {}
+        response:
+          type: object
+          properties:
+            success:
+              type: boolean
+  # other example resources that might be interesting to add:
+  # authors, which could be a reference for book
+  # authors could have a reference to publishers too
+  # example of a child resource, with a redudant type name.
+  # aepc will remove the redundant component in the path pattern
+  - &book-edition
+    kind: "book-edition"
+    plural: "book-editions"
+    # the parents should specify the parents of the resource. It takes in the
+    # kind.
+    parents:
+      - *book
+    properties:
+      required: ["displayname"]
+      displayname:
+        type: string
+        x-aep-field-number: 1
+    methods:
+      create: {}
+      read: {}
+      list: {}
+      delete: {}
+  - kind: "isbn"
+    plural: "isbns"
+    properties: {}
+    methods:
+      read: {}
+      list: {}
+      create: {}
+      # blocked on https://github.com/aep-dev/api-linter/issues/97
+      # non_client_settable_id: true
