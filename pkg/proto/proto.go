@@ -35,6 +35,9 @@ type MessageStorage struct {
 
 func APIToProtoString(a *api.API, outputDir string) ([]byte, error) {
 	fd, err := APIToProto(a, outputDir)
+	if err != nil {
+		return []byte{}, err
+	}
 	printer := protoprint.Printer{
 		CustomSortFunction: compareProtoElements,
 	}

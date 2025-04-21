@@ -15,6 +15,10 @@ type API struct {
 	Name      string
 	Contact   *Contact
 	Schemas   map[string]*openapi.Schema
+	// A list of the resources that are exposed by the API.
+	//
+	// The key "operation" carries a special meaning, and must
+	// map to an aep.dev/151 Operation resource.
 	Resources map[string]*Resource
 }
 

@@ -19,6 +19,7 @@ import (
 	"slices"
 	"strings"
 
+	apipb "buf.build/gen/go/aep/api/protocolbuffers/go/aep/api"
 	"github.com/aep-dev/aep-lib-go/pkg/api"
 	"github.com/aep-dev/aep-lib-go/pkg/cases"
 	"github.com/aep-dev/aep-lib-go/pkg/constants"
@@ -30,6 +31,16 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
+
+var operationMd *desc.MessageDescriptor
+
+func init() {
+	var err error
+	operationMd, err = desc.LoadMessageDescriptor("aep.api.Operation")
+	if err != nil {
+		panic(fmt.Sprintf("error initializing resource.go: %v", err))
+	}
+}
 
 // AddResource adds a resource's protos and RPCs to a file and service.
 func AddResource(r *api.Resource, a *api.API, fb *builder.FileBuilder, sb *builder.ServiceBuilder, m *MessageStorage) error {
@@ -148,8 +159,8 @@ func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStora
 	for k, s := range s.Properties {
 		if s.XAEPFieldNumber != 0 {
 			field_names_by_number[s.XAEPFieldNumber] = k
+			sorted_field_numbers = append(sorted_field_numbers, s.XAEPFieldNumber)
 		}
-		sorted_field_numbers = append(sorted_field_numbers, s.XAEPFieldNumber)
 	}
 	slices.Sort(sorted_field_numbers)
 
@@ -157,7 +168,7 @@ func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStora
 		name := field_names_by_number[num]
 		f, err := protoField(name, num, s.Properties[name], a, m, mb)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error generating message '%s': %v", name, err)
 		}
 		if required[name] {
 			o := &descriptorpb.FieldOptions{}
@@ -172,7 +183,7 @@ func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStora
 func protoField(name string, number int, s openapi.Schema, a *api.API, m *MessageStorage, parent *builder.MessageBuilder) (*builder.FieldBuilder, error) {
 	typ, err := protoFieldType(name, number, s, a, m, parent)
 	if err != nil {
-		return nil, fmt.Errorf("error creating proto field for %s: %w", name, err)
+		return nil, fmt.Errorf("error creating proto field for '%s', with number %d: %w", name, number, err)
 	}
 	f := builder.NewField(name, typ).SetNumber(int32(number)).SetComments(
 		builder.Comments{
@@ -229,16 +240,17 @@ func AddCreate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	}
 	addResourceField(r, resourceMb, mb)
 	fb.AddMessage(mb)
-	method := builder.NewMethod("Create"+toMessageName(r.Singular),
+	method := buildMethod(
+		"Create"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
 		builder.RpcTypeMessage(resourceMb, false),
+		r.Methods.Create.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("An aep-compliant Create method for %v.", r.Singular),
 	})
-	options := &descriptorpb.MethodOptions{}
 	bodyField := cases.KebabToSnakeCase(r.Singular)
-	proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+	proto.SetExtension(method.Options, annotations.E_Http, &annotations.HttpRule{
 		Pattern: &annotations.HttpRule_Post{
 			Post: generateParentHTTPPath(r),
 		},
@@ -248,8 +260,7 @@ func AddCreate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	if len(r.Parents) > 0 {
 		method_signature = []string{constants.FIELD_PARENT_NAME, bodyField}
 	}
-	proto.SetExtension(options, annotations.E_MethodSignature, []string{strings.Join(method_signature, ",")})
-	method.SetOptions(options)
+	proto.SetExtension(method.Options, annotations.E_MethodSignature, []string{strings.Join(method_signature, ",")})
 	sb.AddMethod(method)
 	return nil
 }
@@ -301,27 +312,26 @@ func AddUpdate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 		SetComments(builder.Comments{
 			LeadingComment: "The update mask for the resource",
 		}))
-
 	fb.AddMessage(mb)
-	method := builder.NewMethod("Update"+toMessageName(r.Singular),
+	method := buildMethod(
+		"Update"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
 		builder.RpcTypeMessage(resourceMb, false),
+		r.Methods.Update.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("An aep-compliant Update method for %v.", r.Singular),
 	})
-	options := &descriptorpb.MethodOptions{}
 	body_field := cases.KebabToSnakeCase(r.Singular)
-	proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+	proto.SetExtension(method.Options, annotations.E_Http, &annotations.HttpRule{
 		Pattern: &annotations.HttpRule_Patch{
 			Patch: fmt.Sprintf("/{path=%v}", generateHTTPPath(r)),
 		},
 		Body: body_field,
 	})
-	proto.SetExtension(options, annotations.E_MethodSignature, []string{
+	proto.SetExtension(method.Options, annotations.E_MethodSignature, []string{
 		strings.Join([]string{body_field, constants.FIELD_UPDATE_MASK_NAME}, ","),
 	})
-	method.SetOptions(options)
 	sb.AddMethod(method)
 	return nil
 }
@@ -342,23 +352,23 @@ func AddDelete(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	if err != nil {
 		return err
 	}
-	method := builder.NewMethod("Delete"+toMessageName(r.Singular),
+	method := buildMethod(
+		"Delete"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
 		builder.RpcTypeImportedMessage(emptyMd, false),
+		r.Methods.Delete.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("An aep-compliant Delete method for %v.", r.Singular),
 	})
-	options := &descriptorpb.MethodOptions{}
-	proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+	proto.SetExtension(method.Options, annotations.E_Http, &annotations.HttpRule{
 		Pattern: &annotations.HttpRule_Delete{
 			Delete: fmt.Sprintf("/{path=%v}", generateHTTPPath(r)),
 		},
 	})
-	proto.SetExtension(options, annotations.E_MethodSignature, []string{
+	proto.SetExtension(method.Options, annotations.E_MethodSignature, []string{
 		strings.Join([]string{constants.FIELD_PATH_NAME}, ","),
 	})
-	method.SetOptions(options)
 	sb.AddMethod(method)
 	return nil
 }
@@ -468,22 +478,22 @@ func AddApply(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, f
 	addPathField(a, r, mb)
 	addResourceField(r, resourceMb, mb)
 	fb.AddMessage(mb)
-	method := builder.NewMethod("Apply"+toMessageName(r.Singular),
+	method := buildMethod(
+		"Apply"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
 		builder.RpcTypeMessage(resourceMb, false),
+		r.Methods.Apply.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("An aep-compliant Apply method for %v.", r.Plural),
 	})
-	options := &descriptorpb.MethodOptions{}
-	proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+	proto.SetExtension(method.Options, annotations.E_Http, &annotations.HttpRule{
 		Pattern: &annotations.HttpRule_Put{
 			Put: fmt.Sprintf("/{path=%v}", generateHTTPPath(r)),
 		},
 		// TODO: do a conversion to underscores instead.
 		Body: strings.ToLower(r.Singular),
 	})
-	method.SetOptions(options)
 	sb.AddMethod(method)
 	return nil
 }
@@ -507,31 +517,31 @@ func AddCustomMethod(a *api.API, r *api.Resource, cm *api.CustomMethod, resource
 	})
 	fb.AddMessage(requestMb)
 	fb.AddMessage(responseMb)
-	method := builder.NewMethod(methodName,
+	method := buildMethod(
+		methodName,
 		builder.RpcTypeMessage(requestMb, false),
 		builder.RpcTypeMessage(responseMb, false),
+		cm.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("%v a %v.", cm.Name, r.Singular),
 	})
-	options := &descriptorpb.MethodOptions{}
 	http_path := fmt.Sprintf("/{path=%v}:%v", generateHTTPPath(r), cm.Name)
 	switch cm.Method {
 	case "POST":
-		proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+		proto.SetExtension(method.Options, annotations.E_Http, &annotations.HttpRule{
 			Pattern: &annotations.HttpRule_Post{
 				Post: http_path,
 			},
 			Body: "*",
 		})
 	case "GET":
-		proto.SetExtension(options, annotations.E_Http, &annotations.HttpRule{
+		proto.SetExtension(method.Options, annotations.E_Http, &annotations.HttpRule{
 			Pattern: &annotations.HttpRule_Get{
 				Get: http_path,
 			},
 		})
 	}
-	method.SetOptions(options)
 	sb.AddMethod(method)
 	return nil
 }
@@ -654,4 +664,24 @@ func resourceDescriptor(a *api.API, r *api.Resource) *annotations.ResourceDescri
 		Singular: r.Singular,
 		Plural:   r.Plural,
 	}
+}
+
+func buildMethod(
+	name string,
+	request *builder.RpcType,
+	response *builder.RpcType,
+	isLongRunning bool,
+) *builder.MethodBuilder {
+
+	finalResponse := response
+	options := &descriptorpb.MethodOptions{}
+	if isLongRunning {
+		finalResponse = builder.RpcTypeImportedMessage(operationMd, false)
+		proto.SetExtension(options, apipb.E_OperationInfo, &apipb.OperationInfo{
+			ResponseType: response.GetTypeName(),
+		})
+	}
+	method := builder.NewMethod(name, request, finalResponse)
+	method.SetOptions(options)
+	return method
 }

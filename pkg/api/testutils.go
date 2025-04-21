@@ -89,7 +89,7 @@ func ExampleAPI() *API {
 
 	// Return the complete example API
 	return &API{
-		Name:      "TestAPI", // Changed from "Test API" to "TestAPI" (removed space)
+		Name:      "TestAPI",
 		ServerURL: "https://api.example.com",
 		Contact: &Contact{
 			Name:  "John Doe",
@@ -108,6 +108,7 @@ func ExampleAPI() *API {
 			"book":         book,
 			"book-edition": bookEdition,
 			"publisher":    publisher,
+			"operation":    OperationResourceWithDefaults(),
 		},
 	}
 }

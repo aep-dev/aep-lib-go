@@ -164,9 +164,13 @@ type Schema struct {
 	Ref             string        `json:"$ref,omitempty"`
 	XAEPResource    *XAEPResource `json:"x-aep-resource,omitempty"`
 	XAEPFieldNumber int           `json:"x-aep-field-number,omitempty"`
-	ReadOnly        bool          `json:"readOnly,omitempty"`
-	Required        []string      `json:"required,omitempty"`
-	Description     string        `json:"description,omitempty"`
+	// Documents the name of the proto message to use for generation.
+	// If unset, proto generation will create a proto message for this schema.
+	XAEPProtoMessageName string   `json:"x-aep-proto-message-name,omitempty"`
+	ReadOnly             bool     `json:"readOnly,omitempty"`
+	Required             []string `json:"required,omitempty"`
+	Description          string   `json:"description,omitempty"`
+	AdditionalProperties bool     `json:"additionalProperties,omitempty"`
 }
 
 type Properties map[string]Schema
