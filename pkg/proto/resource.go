@@ -587,7 +587,7 @@ func addParentField(r *api.Resource, mb *builder.MessageBuilder) {
 	mb.AddField(f)
 }
 
-func addIdField(r *api.Resource, mb *builder.MessageBuilder) {
+func addIdField(_ *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_ID_NAME, builder.FieldTypeString()).SetNumber(constants.FIELD_ID_NUMBER).SetComments(builder.Comments{
 		LeadingComment: "An id that uniquely identifies the resource within the collection",
 	})
@@ -603,7 +603,7 @@ func addPathField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_PATH_NAME, builder.FieldTypeString()).
 		SetNumber(constants.FIELD_PATH_NUMBER).
 		SetComments(builder.Comments{
-			LeadingComment: fmt.Sprintf("The globally unique identifier for the resource"),
+			LeadingComment: "The globally unique identifier for the resource",
 		}).
 		SetOptions(o)
 	mb.AddField(f)
@@ -615,7 +615,7 @@ func addResourceField(r *api.Resource, resourceMb, mb *builder.MessageBuilder) {
 	f := builder.NewField(cases.KebabToSnakeCase(r.Singular), builder.FieldTypeMessage(resourceMb)).
 		SetNumber(constants.FIELD_RESOURCE_NUMBER).
 		SetComments(builder.Comments{
-			LeadingComment: fmt.Sprintf("The resource to perform the operation on."),
+			LeadingComment: "The resource to perform the operation on.",
 		}).
 		SetOptions(o)
 	mb.AddField(f)
@@ -628,21 +628,21 @@ func addResourcesField(r *api.Resource, resourceMb, mb *builder.MessageBuilder) 
 	mb.AddField(f)
 }
 
-func addPageToken(r *api.Resource, mb *builder.MessageBuilder) {
+func addPageToken(_ *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_PAGE_TOKEN_NAME, builder.FieldTypeString()).SetNumber(constants.FIELD_PAGE_TOKEN_NUMBER).SetComments(builder.Comments{
-		LeadingComment: fmt.Sprintf("The page token indicating the starting point of the page"),
+		LeadingComment: "The page token indicating the starting point of the page",
 	})
 	mb.AddField(f)
 }
 
-func addNextPageToken(r *api.Resource, mb *builder.MessageBuilder) {
+func addNextPageToken(_ *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_NEXT_PAGE_TOKEN_NAME, builder.FieldTypeString()).SetNumber(constants.FIELD_NEXT_PAGE_TOKEN_NUMBER).SetComments(builder.Comments{
-		LeadingComment: fmt.Sprintf("The page token indicating the ending point of this response."),
+		LeadingComment: "The page token indicating the ending point of this response.",
 	})
 	mb.AddField(f)
 }
 
-func addForceField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
+func addForceField(_ *api.API, _ *api.Resource, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_OPTIONAL})
 	f := builder.NewField(constants.FIELD_FORCE_NAME, builder.FieldTypeBool()).
