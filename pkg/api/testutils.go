@@ -69,6 +69,54 @@ func ExampleAPI() *API {
 	}
 	publisher.Children = append(publisher.Children, book)
 
+	// Resource to test operation logic
+	tome := &Resource{
+		Singular: "tome",
+		Plural:   "tomes",
+		Parents:  []*Resource{publisher},
+		Schema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]openapi.Schema{
+				"name": {Type: "string", XAEPFieldNumber: 1},
+				"id":   {Type: "string", XAEPFieldNumber: 2},
+			},
+		},
+		Methods: Methods{
+			List: &ListMethod{},
+			Get:  &GetMethod{},
+			Apply: &ApplyMethod{
+				IsLongRunning: true,
+			},
+			Create: &CreateMethod{
+				IsLongRunning: true,
+			},
+			Update: &UpdateMethod{
+				IsLongRunning: true,
+			},
+			Delete: &DeleteMethod{
+				IsLongRunning: true,
+			},
+		},
+		CustomMethods: []*CustomMethod{
+			{
+				Name:   "archive",
+				Method: "POST",
+				Request: &openapi.Schema{
+					Type:       "object",
+					Properties: map[string]openapi.Schema{},
+				},
+				Response: &openapi.Schema{
+					Type: "object",
+					Properties: map[string]openapi.Schema{
+						"archived": {Type: "boolean", XAEPFieldNumber: 1},
+					},
+				},
+				IsLongRunning: true,
+			},
+		},
+	}
+	publisher.Children = append(publisher.Children, tome)
+
 	// Create book-edition resource
 	bookEdition := &Resource{
 		Singular: "book-edition",
@@ -109,6 +157,7 @@ func ExampleAPI() *API {
 			"book-edition": bookEdition,
 			"publisher":    publisher,
 			"operation":    OperationResourceWithDefaults(),
+			"tome":         tome,
 		},
 	}
 }

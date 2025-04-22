@@ -32,6 +32,7 @@ func TestAPIToProto(t *testing.T) {
 		expectError    bool
 		expectMessages []string
 		expectMethods  []string
+		expectStrings  []string
 	}{
 		{
 			name:        "BasicAPItoProtoConversion",
@@ -58,6 +59,7 @@ func TestAPIToProto(t *testing.T) {
 				"GetBookEditionRequest",
 				"ListBookEditionsRequest",
 				"ListBookEditionsResponse",
+				"ArchiveTomeRequest",
 			},
 			expectMethods: []string{
 				"CreatePublisher",
@@ -71,6 +73,10 @@ func TestAPIToProto(t *testing.T) {
 				"ArchiveBook",
 				"GetBookEdition",
 				"ListBookEditions",
+			},
+			expectStrings: []string{
+				// verify that ArchiveTome is a long-running-operation.
+				"rpc ArchiveTome ( ArchiveTomeRequest ) returns ( aep.api.Operation ) {",
 			},
 		},
 	}
@@ -108,7 +114,7 @@ func TestAPIToProto(t *testing.T) {
 
 			protoContent := string(protoString)
 			// Print the proto content for debugging
-			// t.Logf("Proto content: \n%s", protoContent)
+			t.Logf("Proto content: \n---\n%s\n---", protoContent)
 
 			// Check for expected messages
 			for _, msgName := range tt.expectMessages {
@@ -127,6 +133,13 @@ func TestAPIToProto(t *testing.T) {
 						strings.Contains(protoContent, "rpc "+methodName+" (") ||
 						strings.Contains(protoContent, "rpc "+methodName+"("),
 					"Expected method %s not found in proto content", methodName)
+			}
+
+			// Check for expected strings
+			for _, expectedString := range tt.expectStrings {
+				assert.True(t,
+					strings.Contains(protoContent, expectedString),
+					"Expected string %s not found in proto content", expectedString)
 			}
 
 			// Verify correct parent-child relationships in the API paths

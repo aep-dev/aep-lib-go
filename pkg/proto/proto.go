@@ -30,7 +30,7 @@ import (
 )
 
 type MessageStorage struct {
-	Messages map[string]*builder.MessageBuilder
+	Messages map[string]Message
 }
 
 func APIToProtoString(a *api.API, outputDir string) ([]byte, error) {
@@ -50,7 +50,7 @@ func APIToProtoString(a *api.API, outputDir string) ([]byte, error) {
 }
 
 func APIToProto(a *api.API, outputDir string) (*desc.FileDescriptor, error) {
-	m := &MessageStorage{Messages: map[string]*builder.MessageBuilder{}}
+	m := &MessageStorage{Messages: map[string]Message{}}
 	dir, file := filepath.Split(outputDir)
 	packageParts := []string{file}
 	for dir != "." {
@@ -130,7 +130,7 @@ func GenerateSchemaMessages(a *api.API, m *MessageStorage, fb *builder.FileBuild
 		if err != nil {
 			return err
 		}
-		fb.AddMessage(mb)
+		mb.AddMessage(fb)
 	}
 	return nil
 }

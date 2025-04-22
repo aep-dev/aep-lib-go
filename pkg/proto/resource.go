@@ -43,42 +43,42 @@ func init() {
 }
 
 // AddResource adds a resource's protos and RPCs to a file and service.
-func AddResource(r *api.Resource, a *api.API, fb *builder.FileBuilder, sb *builder.ServiceBuilder, m *MessageStorage) error {
+func AddResource(r *api.Resource, a *api.API, fb *builder.FileBuilder, sb *builder.ServiceBuilder, ms *MessageStorage) error {
 	// Do not recreate resources if they've already been created.
-	resourceMb, ok := m.Messages[fmt.Sprintf("%s/%s", a.Name, r.Singular)]
-	options := &descriptorpb.MessageOptions{}
-	proto.SetExtension(options, annotations.E_Resource, resourceDescriptor(a, r))
-	resourceMb.SetOptions(options)
+	resMsg, ok := ms.Messages[fmt.Sprintf("%s/%s", a.Name, r.Singular)]
+	if options := resMsg.Options(); options != nil {
+		proto.SetExtension(options, annotations.E_Resource, resourceDescriptor(a, r))
+	}
 	if !ok {
 		return fmt.Errorf("%s not found in message storage", r.Singular)
 	}
 
 	if r.Methods.Create != nil {
-		err := AddCreate(a, r, resourceMb, fb, sb)
+		err := AddCreate(a, r, resMsg, fb, sb)
 		if err != nil {
 			return err
 		}
 	}
 	if r.Methods.Get != nil {
-		err := AddGet(a, r, resourceMb, fb, sb)
+		err := AddGet(a, r, resMsg, fb, sb)
 		if err != nil {
 			return err
 		}
 	}
 	if r.Methods.Update != nil {
-		err := AddUpdate(a, r, resourceMb, fb, sb)
+		err := AddUpdate(a, r, resMsg, fb, sb)
 		if err != nil {
 			return err
 		}
 	}
 	if r.Methods.Delete != nil {
-		err := AddDelete(a, r, resourceMb, fb, sb)
+		err := AddDelete(a, r, resMsg, fb, sb)
 		if err != nil {
 			return err
 		}
 	}
 	if r.Methods.List != nil {
-		err := AddList(r, resourceMb, fb, sb)
+		err := AddList(r, resMsg, fb, sb)
 		if err != nil {
 			return err
 		}
@@ -92,14 +92,14 @@ func AddResource(r *api.Resource, a *api.API, fb *builder.FileBuilder, sb *build
 	/// }
 
 	if r.Methods.Apply != nil {
-		err := AddApply(a, r, resourceMb, fb, sb)
+		err := AddApply(a, r, resMsg, fb, sb)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, cm := range r.CustomMethods {
-		err := AddCustomMethod(a, r, cm, resourceMb, fb, m, sb)
+		err := AddCustomMethod(a, r, cm, resMsg, fb, ms, sb)
 		if err != nil {
 			return err
 		}
@@ -147,6 +147,8 @@ func protoFieldType(name string, number int, s openapi.Schema, a *api.API, m *Me
 
 func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStorage) (*builder.MessageBuilder, error) {
 	mb := builder.NewMessage(name)
+	options := &descriptorpb.MessageOptions{}
+	mb.SetOptions(options)
 	mb.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("A %v.", name),
 	})
@@ -206,7 +208,7 @@ func protoFieldTypeObject(name string, s *openapi.Schema, a *api.API, m *Message
 		if !ok {
 			return nil, fmt.Errorf("could not find message %s, referenced by %s", wantedType, name)
 		}
-		return builder.FieldTypeMessage(m.Messages[wantedType]), nil
+		return m.Messages[wantedType].FieldType(), nil
 	} else {
 		msg, err := GenerateMessage(toMessageName(name), s, a, m)
 		if err != nil {
@@ -218,16 +220,26 @@ func protoFieldTypeObject(name string, s *openapi.Schema, a *api.API, m *Message
 }
 
 // GenerateResourceMesssage adds the resource message.
-func GenerateSchemaMessage(name string, s *openapi.Schema, a *api.API, m *MessageStorage) (*builder.MessageBuilder, error) {
-	mb, err := GenerateMessage(toMessageName(name), s, a, m)
-	if err != nil {
-		return nil, err
+func GenerateSchemaMessage(name string, s *openapi.Schema, a *api.API, ms *MessageStorage) (Message, error) {
+	var m Message
+	if s.XAEPProtoMessageName != "" {
+		md, err := desc.LoadMessageDescriptor(s.XAEPProtoMessageName)
+		if err != nil {
+			return nil, fmt.Errorf("error loading message descriptor for %s: %w", s.XAEPProtoMessageName, err)
+		}
+		m = NewWrappedMessageDescriptor(md)
+	} else {
+		mb, err := GenerateMessage(toMessageName(name), s, a, ms)
+		if err != nil {
+			return nil, err
+		}
+		m = NewWrappedMessageBuilder(mb)
 	}
-	m.Messages[fmt.Sprintf("%s/%s", a.Name, name)] = mb
-	return mb, nil
+	ms.Messages[fmt.Sprintf("%s/%s", a.Name, name)] = m
+	return m, nil
 }
 
-func AddCreate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddCreate(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	// add the resource message
 	// create request messages
 	mb := builder.NewMessage("Create" + toMessageName(r.Singular) + "Request")
@@ -238,12 +250,12 @@ func AddCreate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	if r.Methods.Create.SupportsUserSettableCreate {
 		addIdField(r, mb)
 	}
-	addResourceField(r, resourceMb, mb)
+	addResourceField(r, resMsg, mb)
 	fb.AddMessage(mb)
 	method := buildMethod(
 		"Create"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
-		builder.RpcTypeMessage(resourceMb, false),
+		resMsg.RpcType(),
 		r.Methods.Create.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
@@ -267,7 +279,7 @@ func AddCreate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 
 // AddGet adds a read method for the resource, along with
 // any required messages.
-func AddGet(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddGet(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	mb := builder.NewMessage("Get" + toMessageName(r.Singular) + "Request")
 	mb.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("Request message for the Get%v method", r.Singular),
@@ -276,7 +288,7 @@ func AddGet(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb 
 	fb.AddMessage(mb)
 	method := builder.NewMethod("Get"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
-		builder.RpcTypeMessage(resourceMb, false),
+		resMsg.RpcType(),
 	)
 	method.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("An aep-compliant Get method for %v.", r.Singular),
@@ -297,13 +309,13 @@ func AddGet(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb 
 
 // AddRead adds a read method for the resource, along with
 // any required messages.
-func AddUpdate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddUpdate(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	mb := builder.NewMessage("Update" + toMessageName(r.Singular) + "Request")
 	mb.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("Request message for the Update%v method", toMessageName(r.Singular)),
 	})
 	addPathField(a, r, mb)
-	addResourceField(r, resourceMb, mb)
+	addResourceField(r, resMsg, mb)
 	// TODO: find a way to get the actual field mask proto descriptor type, without
 	// querying the global registry.
 	fieldMaskDescriptor, _ := desc.LoadMessageDescriptorForType(reflect.TypeOf(fieldmaskpb.FieldMask{}))
@@ -316,7 +328,7 @@ func AddUpdate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	method := buildMethod(
 		"Update"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
-		builder.RpcTypeMessage(resourceMb, false),
+		resMsg.RpcType(),
 		r.Methods.Update.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
@@ -336,7 +348,7 @@ func AddUpdate(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	return nil
 }
 
-func AddDelete(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddDelete(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	// add the resource message
 	// create request messages
 	mb := builder.NewMessage("Delete" + toMessageName(r.Singular) + "Request")
@@ -373,7 +385,7 @@ func AddDelete(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, 
 	return nil
 }
 
-func AddList(r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddList(r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	// add the resource message
 	// create request messages
 	reqMb := builder.NewMessage("List" + toMessageName(r.Plural) + "Request")
@@ -406,10 +418,10 @@ func AddList(r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.Fi
 	respMb.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("Response message for the List%v method", r.Singular),
 	})
-	addResourcesField(r, resourceMb, respMb)
+	addResourcesField(r, resMsg, respMb)
 	addNextPageToken(r, respMb)
 	if r.Methods.List.HasUnreachableResources {
-		f := builder.NewField(constants.FIELD_UNREACHABLE_NAME, builder.FieldTypeMessage(resourceMb)).SetNumber(constants.FIELD_UNREACHABLE_NUMBER).SetComments(builder.Comments{
+		f := builder.NewField(constants.FIELD_UNREACHABLE_NAME, resMsg.FieldType()).SetNumber(constants.FIELD_UNREACHABLE_NUMBER).SetComments(builder.Comments{
 			LeadingComment: fmt.Sprintf("A list of %v that were not reachable.", r.Plural),
 		}).SetRepeated()
 		respMb.AddField(f)
@@ -436,7 +448,7 @@ func AddList(r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.Fi
 	return nil
 }
 
-func AddGlobalList(r *api.Resource, a *api.API, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddGlobalList(r *api.Resource, a *api.API, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	// add the resource message
 	// create request messages
 	reqMb := builder.NewMessage("GlobalList" + r.Singular + "Request")
@@ -450,7 +462,7 @@ func AddGlobalList(r *api.Resource, a *api.API, resourceMb *builder.MessageBuild
 	respMb.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("Response message for the GlobalList%v method", r.Singular),
 	})
-	addResourcesField(r, resourceMb, respMb)
+	addResourcesField(r, resMsg, respMb)
 	addNextPageToken(r, respMb)
 	fb.AddMessage(respMb)
 	method := builder.NewMethod("GlobalList"+r.Singular,
@@ -470,18 +482,18 @@ func AddGlobalList(r *api.Resource, a *api.API, resourceMb *builder.MessageBuild
 
 // AddApply adds a read method for the resource, along with
 // any required messages.
-func AddApply(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
+func AddApply(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *builder.ServiceBuilder) error {
 	mb := builder.NewMessage("Apply" + toMessageName(r.Singular) + "Request")
 	mb.SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("Request message for the Apply%v method", r.Singular),
 	})
 	addPathField(a, r, mb)
-	addResourceField(r, resourceMb, mb)
+	addResourceField(r, resMsg, mb)
 	fb.AddMessage(mb)
 	method := buildMethod(
 		"Apply"+toMessageName(r.Singular),
 		builder.RpcTypeMessage(mb, false),
-		builder.RpcTypeMessage(resourceMb, false),
+		resMsg.RpcType(),
 		r.Methods.Apply.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
@@ -498,9 +510,9 @@ func AddApply(a *api.API, r *api.Resource, resourceMb *builder.MessageBuilder, f
 	return nil
 }
 
-func AddCustomMethod(a *api.API, r *api.Resource, cm *api.CustomMethod, resourceMb *builder.MessageBuilder, fb *builder.FileBuilder, m *MessageStorage, sb *builder.ServiceBuilder) error {
-	methodName := cm.Name + toMessageName(r.Singular)
-	requestMb, err := GenerateSchemaMessage(methodName+"Request", cm.Request, a, m)
+func AddCustomMethod(a *api.API, r *api.Resource, cm *api.CustomMethod, resMsg Message, fb *builder.FileBuilder, m *MessageStorage, sb *builder.ServiceBuilder) error {
+	methodName := cases.KebabToCamelCase(cm.Name) + toMessageName(r.Singular)
+	requestMb, err := GenerateMessage(methodName+"Request", cm.Request, a, m)
 	if err != nil {
 		return err
 	}
@@ -508,7 +520,7 @@ func AddCustomMethod(a *api.API, r *api.Resource, cm *api.CustomMethod, resource
 		LeadingComment: fmt.Sprintf("Request message for the %v method", cm.Name),
 	})
 	addPathField(a, r, requestMb)
-	responseMb, err := GenerateSchemaMessage(methodName+"Response", cm.Response, a, m)
+	responseMb, err := GenerateMessage(methodName+"Response", cm.Response, a, m)
 	if err != nil {
 		return err
 	}
@@ -609,10 +621,10 @@ func addPathField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
 	mb.AddField(f)
 }
 
-func addResourceField(r *api.Resource, resourceMb, mb *builder.MessageBuilder) {
+func addResourceField(r *api.Resource, resMsg Message, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
-	f := builder.NewField(cases.KebabToSnakeCase(r.Singular), builder.FieldTypeMessage(resourceMb)).
+	f := builder.NewField(cases.KebabToSnakeCase(r.Singular), resMsg.FieldType()).
 		SetNumber(constants.FIELD_RESOURCE_NUMBER).
 		SetComments(builder.Comments{
 			LeadingComment: "The resource to perform the operation on.",
@@ -621,8 +633,8 @@ func addResourceField(r *api.Resource, resourceMb, mb *builder.MessageBuilder) {
 	mb.AddField(f)
 }
 
-func addResourcesField(r *api.Resource, resourceMb, mb *builder.MessageBuilder) {
-	f := builder.NewField(constants.FIELD_RESULTS_NAME, builder.FieldTypeMessage(resourceMb)).SetNumber(constants.FIELD_RESULTS_NUMBER).SetComments(builder.Comments{
+func addResourcesField(r *api.Resource, resMsg Message, mb *builder.MessageBuilder) {
+	f := builder.NewField(constants.FIELD_RESULTS_NAME, resMsg.FieldType()).SetNumber(constants.FIELD_RESULTS_NUMBER).SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("A list of %v", r.Plural),
 	}).SetRepeated()
 	mb.AddField(f)
