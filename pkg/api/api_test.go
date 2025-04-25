@@ -1,10 +1,15 @@
 package api
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 var basicOpenAPI = &openapi.OpenAPI{
@@ -567,4 +572,69 @@ func TestGetAPI(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParseBookstoreYAMLDirectly(t *testing.T) {
+	// Construct the path relative to the test file's location
+	yamlPath := filepath.Join("..", "..", "examples", "resource-definitions", "bookstore.yaml")
+
+	// Read the YAML file
+	yamlData, err := os.ReadFile(yamlPath)
+	require.NoError(t, err, "Failed to read bookstore.yaml")
+	require.NotEmpty(t, yamlData, "bookstore.yaml is empty")
+
+	// Unmarshal YAML into a generic interface{}
+	var genericYamlData interface{}
+	err = yaml.Unmarshal(yamlData, &genericYamlData)
+	require.NoError(t, err, "Failed to unmarshal YAML into generic interface")
+
+	// Marshal the generic interface{} to JSON
+	jsonData, err := json.Marshal(genericYamlData)
+	require.NoError(t, err, "Failed to marshal generic interface to JSON")
+	require.NotEmpty(t, jsonData, "Resulting JSON data is empty")
+
+	// Attempt to unmarshal the JSON directly into api.API
+	var apiResult API
+	err = json.Unmarshal(jsonData, &apiResult)
+	require.NoError(t, err, "Failed to unmarshal JSON into api.API struct")
+
+	// Assert basic fields that might match (like Name, ServerURL, Contact)
+	assert.Equal(t, "bookstore.example.com", apiResult.Name, "API Name should be populated if field names match")
+	assert.Equal(t, "http://localhost:8081", apiResult.ServerURL, "API ServerURL should be populated based on json tag")
+	if assert.NotNil(t, apiResult.Contact, "Contact might be populated if fields match") {
+		assert.Equal(t, "API support", apiResult.Contact.Name)
+		assert.Equal(t, "aepsupport@aep.dev", apiResult.Contact.Email)
+	}
+
+	// Assert that Resources map IS populated correctly
+	assert.NotEmpty(t, apiResult.Resources, "Resources map should be populated")
+	assert.Contains(t, apiResult.Resources, "publisher", "Resources map should contain 'publisher'")
+	assert.Contains(t, apiResult.Resources, "book", "Resources map should contain 'book'")
+	assert.Contains(t, apiResult.Resources, "book-edition", "Resources map should contain 'book-edition'")
+	assert.Contains(t, apiResult.Resources, "isbn", "Resources map should contain 'isbn'")
+
+	// Check some details of a resource
+	publisherResource := apiResult.Resources["publisher"]
+	assert.NotNil(t, publisherResource, "'publisher' resource should not be nil")
+	assert.Equal(t, "publisher", publisherResource.Singular)
+	assert.Equal(t, "publishers", publisherResource.Plural)
+	assert.NotNil(t, publisherResource.Schema, "'publisher' resource schema should not be nil")
+	assert.Equal(t, "object", publisherResource.Schema.Type)
+	assert.Contains(t, publisherResource.Schema.Properties, "description")
+	assert.Equal(t, "string", publisherResource.Schema.Properties["description"].Type)
+	assert.NotNil(t, publisherResource.Methods.List, "'publisher' should have List method")
+	assert.True(t, publisherResource.Methods.List.SupportsFilter)
+
+	// Check book resource details, including custom method
+	bookResource := apiResult.Resources["book"]
+	assert.NotNil(t, bookResource, "'book' resource should not be nil")
+	assert.Equal(t, "book", bookResource.Singular)
+	assert.Equal(t, "books", bookResource.Plural)
+	assert.NotNil(t, bookResource.Schema, "'book' resource schema should not be nil")
+	assert.Contains(t, bookResource.Schema.Properties, "isbn")
+	assert.Equal(t, "array", bookResource.Schema.Properties["isbn"].Type)
+	assert.NotNil(t, bookResource.Methods.List, "'book' should have List method")
+	assert.True(t, bookResource.Methods.List.HasUnreachableResources)
+	assert.Len(t, bookResource.CustomMethods, 1, "'book' should have 1 custom method")
+	assert.Equal(t, "archive", bookResource.CustomMethods[0].Name)
 }
