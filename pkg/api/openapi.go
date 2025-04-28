@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	AEP_OPERATION_REF = "://aep.dev/json-schema/type/operation.json"
+	AEP_OPERATION_REF = "https://aep.dev/json-schema/type/operation.json"
 )
 
 func (api *API) ConvertToOpenAPIBytes() ([]byte, error) {
