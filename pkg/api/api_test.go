@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
+	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 var basicOpenAPI = &openapi.OpenAPI{
@@ -583,18 +583,10 @@ func TestParseBookstoreYAMLDirectly(t *testing.T) {
 	require.NoError(t, err, "Failed to read bookstore.yaml")
 	require.NotEmpty(t, yamlData, "bookstore.yaml is empty")
 
-	// Unmarshal YAML into a generic interface{}
-	var genericYamlData interface{}
-	err = yaml.Unmarshal(yamlData, &genericYamlData)
-	require.NoError(t, err, "Failed to unmarshal YAML into generic interface")
+	jsonData, err := yaml.YAMLToJSON(yamlData)
+	require.NoError(t, err, "Failed to convert YAML to JSON")
 
-	// Marshal the generic interface{} to JSON
-	jsonData, err := json.Marshal(genericYamlData)
-	require.NoError(t, err, "Failed to marshal generic interface to JSON")
-	require.NotEmpty(t, jsonData, "Resulting JSON data is empty")
-
-	// Attempt to unmarshal the JSON directly into api.API
-	var apiResult API
+	apiResult, err := LoadAPIFromJson(jsonData)
 	err = json.Unmarshal(jsonData, &apiResult)
 	require.NoError(t, err, "Failed to unmarshal JSON into api.API struct")
 

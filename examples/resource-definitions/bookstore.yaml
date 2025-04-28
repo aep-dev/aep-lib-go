@@ -47,6 +47,7 @@ resources:
           type: integer
           x-aep-field-number: 4
         author:
+          x-aep-field-number: 5
           type: array
           items:
             type: object

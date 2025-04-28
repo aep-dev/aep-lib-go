@@ -136,7 +136,7 @@ func ExampleAPI() *API {
 	book.Children = append(book.Children, bookEdition)
 
 	// Return the complete example API
-	return &API{
+	api := &API{
 		Name:      "TestAPI",
 		ServerURL: "https://api.example.com",
 		Contact: &Contact{
@@ -160,4 +160,8 @@ func ExampleAPI() *API {
 			"tome":         tome,
 		},
 	}
+	if err := addImplicitFields(api); err != nil {
+		panic(err)
+	}
+	return api
 }

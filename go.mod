@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	buf.build/gen/go/aep/api/protocolbuffers/go v1.36.6-20250324194021-2fc44491c629.1
+	github.com/ghodss/yaml v1.0.0
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/jhump/protoreflect v1.17.0
 	github.com/stretchr/testify v1.9.0
@@ -18,5 +19,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
