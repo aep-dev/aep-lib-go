@@ -10,6 +10,10 @@ import (
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
 
+const (
+	AEP_OPERATION_REF = "://aep.dev/json-schema/type/operation.json"
+)
+
 func (api *API) ConvertToOpenAPIBytes() ([]byte, error) {
 	openAPI, err := ConvertToOpenAPI(api)
 	if err != nil {
@@ -193,7 +197,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: &openapi.Schema{
-										Ref: "//aep.dev/json-schema/type/operation.json",
+										Ref: AEP_OPERATION_REF,
 									},
 								},
 							},
@@ -253,7 +257,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: &openapi.Schema{
-										Ref: "//aep.dev/json-schema/type/operation.json",
+										Ref: AEP_OPERATION_REF,
 									},
 								},
 							},
@@ -302,7 +306,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: &openapi.Schema{
-										Ref: "//aep.dev/json-schema/type/operation.json",
+										Ref: AEP_OPERATION_REF,
 									},
 								},
 							},
@@ -333,7 +337,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: &openapi.Schema{
-										Ref: "//aep.dev/json-schema/type/operation.json",
+										Ref: AEP_OPERATION_REF,
 									},
 								},
 							},
@@ -397,7 +401,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 							Content: map[string]openapi.MediaType{
 								"application/json": {
 									Schema: &openapi.Schema{
-										Ref: "//aep.dev/json-schema/type/operation.json",
+										Ref: AEP_OPERATION_REF,
 									},
 								},
 							},

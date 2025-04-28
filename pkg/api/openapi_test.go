@@ -545,7 +545,7 @@ func TestLongRunningOperation(t *testing.T) {
 	path := "/testResources/{testResource}:longRunningTest"
 	operation := openAPI.Paths[path].Post
 	assert.NotNil(t, operation, "Expected POST operation for long-running test")
-	assert.Equal(t, "//aep.dev/json-schema/type/operation.json",
+	assert.Equal(t, AEP_OPERATION_REF,
 		operation.Responses["200"].Content["application/json"].Schema.Ref,
 		"Expected response schema to reference aep.api.Operation")
 	assert.NotNil(t, operation.XAEPLongRunningOperation,
@@ -595,7 +595,7 @@ func TestLongRunningMethods(t *testing.T) {
 	createPath := "/testResources"
 	createOperation := openAPI.Paths[createPath].Post
 	assert.NotNil(t, createOperation, "Expected POST operation for CreateMethod")
-	assert.Equal(t, "//aep.dev/json-schema/type/operation.json",
+	assert.Equal(t, AEP_OPERATION_REF,
 		createOperation.Responses["200"].Content["application/json"].Schema.Ref,
 		"Expected response schema to reference aep.api.Operation for CreateMethod")
 	assert.NotNil(t, createOperation.XAEPLongRunningOperation,
@@ -605,7 +605,7 @@ func TestLongRunningMethods(t *testing.T) {
 	applyPath := "/testResources/{testResource}"
 	applyOperation := openAPI.Paths[applyPath].Put
 	assert.NotNil(t, applyOperation, "Expected PUT operation for ApplyMethod")
-	assert.Equal(t, "//aep.dev/json-schema/type/operation.json",
+	assert.Equal(t, AEP_OPERATION_REF,
 		applyOperation.Responses["200"].Content["application/json"].Schema.Ref,
 		"Expected response schema to reference aep.api.Operation for ApplyMethod")
 	assert.NotNil(t, applyOperation.XAEPLongRunningOperation,
@@ -614,7 +614,7 @@ func TestLongRunningMethods(t *testing.T) {
 	// Validate UpdateMethod
 	updateOperation := openAPI.Paths[applyPath].Patch
 	assert.NotNil(t, updateOperation, "Expected PATCH operation for UpdateMethod")
-	assert.Equal(t, "//aep.dev/json-schema/type/operation.json",
+	assert.Equal(t, AEP_OPERATION_REF,
 		updateOperation.Responses["200"].Content["application/json"].Schema.Ref,
 		"Expected response schema to reference aep.api.Operation for UpdateMethod")
 	assert.NotNil(t, updateOperation.XAEPLongRunningOperation,
@@ -623,7 +623,7 @@ func TestLongRunningMethods(t *testing.T) {
 	// Validate DeleteMethod
 	deleteOperation := openAPI.Paths[applyPath].Delete
 	assert.NotNil(t, deleteOperation, "Expected DELETE operation for DeleteMethod")
-	assert.Equal(t, "//aep.dev/json-schema/type/operation.json",
+	assert.Equal(t, AEP_OPERATION_REF,
 		deleteOperation.Responses["200"].Content["application/json"].Schema.Ref,
 		"Expected response schema to reference aep.api.Operation for DeleteMethod")
 	assert.NotNil(t, deleteOperation.XAEPLongRunningOperation,

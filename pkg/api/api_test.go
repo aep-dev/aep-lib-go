@@ -434,7 +434,7 @@ func TestGetAPI(t *testing.T) {
 									Content: map[string]openapi.MediaType{
 										"application/json": {
 											Schema: &openapi.Schema{
-												Ref: "//aep.dev/json-schema/type/operation.json",
+												Ref: AEP_OPERATION_REF,
 											},
 										},
 									},
@@ -478,7 +478,7 @@ func TestGetAPI(t *testing.T) {
 									Content: map[string]openapi.MediaType{
 										"application/json": {
 											Schema: &openapi.Schema{
-												Ref: "//aep.dev/json-schema/type/operation.json",
+												Ref: AEP_OPERATION_REF,
 											},
 										},
 									},
@@ -509,7 +509,7 @@ func TestGetAPI(t *testing.T) {
 									Content: map[string]openapi.MediaType{
 										"application/json": {
 											Schema: &openapi.Schema{
-												Ref: "//aep.dev/json-schema/type/operation.json",
+												Ref: AEP_OPERATION_REF,
 											},
 										},
 									},
