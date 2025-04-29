@@ -212,11 +212,11 @@ func checkErrors(resp map[string]interface{}) error {
 	return nil
 }
 
-func basePath(ctx context.Context, r *api.Resource, serverUrl string, parameters map[string]string, suffix string) (string, error) {
+func basePath(_ context.Context, r *api.Resource, serverUrl string, parameters map[string]string, suffix string) (string, error) {
 	serverUrl = strings.TrimSuffix(serverUrl, "/")
 	urlElems := []string{serverUrl}
-	for i, elem := range r.PatternElems {
-		if i == len(r.PatternElems)-1 {
+	for i, elem := range r.PatternElems() {
+		if i == len(r.PatternElems())-1 {
 			continue
 		}
 

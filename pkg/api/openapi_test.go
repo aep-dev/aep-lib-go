@@ -305,7 +305,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 		{
 			name: "with pattern elements",
 			resource: &Resource{
-				PatternElems: []string{"databases", "{database}", "tables", "{table}"},
+				patternElems: []string{"databases", "{database}", "tables", "{table}"},
 				Singular:     "table",
 			},
 			wantCollection: "/tables",
@@ -331,7 +331,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 		{
 			name: "with pattern elements no nesting",
 			resource: &Resource{
-				PatternElems: []string{"databases", "{database}"},
+				patternElems: []string{"databases", "{database}"},
 				Singular:     "database",
 			},
 			wantCollection: "/databases",
@@ -348,7 +348,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 			resource: &Resource{
 				Singular: "table",
 				Plural:   "tables",
-				Parents: []*Resource{
+				parentResources: []*Resource{
 					{
 						Singular: "database",
 						Plural:   "databases",
@@ -380,11 +380,11 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 			resource: &Resource{
 				Singular: "table",
 				Plural:   "tables",
-				Parents: []*Resource{
+				parentResources: []*Resource{
 					{
 						Singular: "database",
 						Plural:   "databases",
-						Parents: []*Resource{
+						parentResources: []*Resource{
 							{
 								Singular: "account",
 								Plural:   "accounts",

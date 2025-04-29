@@ -77,6 +77,7 @@ func TestAPIToProto(t *testing.T) {
 			expectStrings: []string{
 				// verify that ArchiveTome is a long-running-operation.
 				"rpc ArchiveTome ( ArchiveTomeRequest ) returns ( aep.api.Operation ) {",
+				"string id = 10014;",
 			},
 		},
 	}

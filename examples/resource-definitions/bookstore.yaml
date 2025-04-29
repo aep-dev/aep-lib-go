@@ -26,8 +26,7 @@ resources:
   book: &book
     singular: "book"
     plural: "books"
-    parents:
-      - *publisher
+    parents: ["publisher"]
     schema:
       type: object
       required: ["author", "edition", "isbn", "price", "published"]
@@ -59,7 +58,8 @@ resources:
                 type: string
                 x-aep-field-number: 2
     methods:
-      create: {}
+      create:
+        supports_user_settable_create: true
       read: {}
       update: {}
       delete: {}
@@ -80,8 +80,7 @@ resources:
   book-edition:
     singular: "book-edition"
     plural: "book-editions"
-    parents:
-      - *book
+    parents: ["book"]
     schema:
       type: object
       required: ["displayname"]

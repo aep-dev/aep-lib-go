@@ -20,16 +20,17 @@ func ExampleAPI() *API {
 			List: &ListMethod{},
 			Get:  &GetMethod{},
 			Create: &CreateMethod{
-				SupportsUserSettableCreate: true,
+				SupportsUserSettableCreate: false,
 			},
 		},
 	}
 
 	// Create book resource
 	book := &Resource{
-		Singular: "book",
-		Plural:   "books",
-		Parents:  []*Resource{publisher},
+		Singular:        "book",
+		Plural:          "books",
+		Parents:         []string{"publisher"},
+		parentResources: []*Resource{publisher},
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
@@ -71,9 +72,10 @@ func ExampleAPI() *API {
 
 	// Resource to test operation logic
 	tome := &Resource{
-		Singular: "tome",
-		Plural:   "tomes",
-		Parents:  []*Resource{publisher},
+		Singular:        "tome",
+		Plural:          "tomes",
+		Parents:         []string{"publisher"},
+		parentResources: []*Resource{publisher},
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
@@ -119,9 +121,10 @@ func ExampleAPI() *API {
 
 	// Create book-edition resource
 	bookEdition := &Resource{
-		Singular: "book-edition",
-		Plural:   "book-editions",
-		Parents:  []*Resource{book},
+		Singular:        "book-edition",
+		Plural:          "book-editions",
+		Parents:         []string{"book"},
+		parentResources: []*Resource{book},
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{

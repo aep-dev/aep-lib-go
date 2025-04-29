@@ -411,15 +411,11 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				addMethodToPath(paths, cmPath, methodType, methodInfo)
 			}
 		}
-		parents := []string{}
-		for _, p := range r.Parents {
-			parents = append(parents, p.Singular)
-		}
 		d.XAEPResource = &openapi.XAEPResource{
 			Singular: r.Singular,
 			Plural:   r.Plural,
 			Patterns: patterns,
-			Parents:  parents,
+			Parents:  r.Parents,
 		}
 		components.Schemas[r.Singular] = *d
 	}
@@ -480,11 +476,11 @@ type PathWithParams struct {
 func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 	// case 1: pattern elems are present, so we use them.
 	// TODO(yft): support multiple patterns
-	if len(r.PatternElems) > 0 {
-		collection := fmt.Sprintf("/%s", r.PatternElems[len(r.PatternElems)-2])
+	if len(r.patternElems) > 0 {
+		collection := fmt.Sprintf("/%s", r.patternElems[len(r.patternElems)-2])
 		params := []openapi.Parameter{}
-		for i := 0; i < len(r.PatternElems)-2; i += 2 {
-			pElem := r.PatternElems[i+1]
+		for i := 0; i < len(r.patternElems)-2; i += 2 {
+			pElem := r.patternElems[i+1]
 			params = append(params, openapi.Parameter{
 				In:       "path",
 				Name:     pElem[1 : len(pElem)-1],
@@ -494,7 +490,7 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 				},
 			})
 		}
-		pattern := strings.Join(r.PatternElems[0:len(r.PatternElems)-2], "/")
+		pattern := strings.Join(r.patternElems[0:len(r.patternElems)-2], "/")
 		if pattern != "" {
 			pattern = fmt.Sprintf("/%s", pattern)
 		}
@@ -505,7 +501,7 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 	// case 2: no pattern elems, so we need to generate the collection names
 	collection := fmt.Sprintf("/%s", CollectionName(r))
 	pwps := []PathWithParams{}
-	for _, parent := range r.Parents {
+	for _, parent := range r.ParentResources() {
 		singular := parent.Singular
 		basePattern := fmt.Sprintf("/%s/{%s}", CollectionName(parent), singular)
 		baseParam := openapi.Parameter{
@@ -519,7 +515,7 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 				Resource: singular,
 			},
 		}
-		if len(parent.Parents) == 0 {
+		if len(parent.ParentResources()) == 0 {
 			pwps = append(pwps, PathWithParams{
 				Pattern: basePattern,
 				Params:  []openapi.Parameter{baseParam},

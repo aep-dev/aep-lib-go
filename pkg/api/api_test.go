@@ -180,7 +180,7 @@ func TestGetAPI(t *testing.T) {
 
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
-				assert.Equal(t, widget.PatternElems, []string{"widgets", "{widget}"})
+				assert.Equal(t, widget.PatternElems(), []string{"widgets", "{widget}"})
 				assert.Equal(t, sd.ServerURL, "https://api.example.com")
 				assert.NotNil(t, widget.Methods.Get, "should have GET method")
 				assert.NotNil(t, widget.Methods.List, "should have LIST method")
@@ -251,7 +251,7 @@ func TestGetAPI(t *testing.T) {
 				assert.True(t, ok, "widget resource should exist")
 				assert.Equal(t, "widget", widget.Singular)
 				assert.Equal(t, "widgets", widget.Plural)
-				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems)
+				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems())
 			},
 		},
 		{
@@ -333,7 +333,7 @@ func TestGetAPI(t *testing.T) {
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
 				assert.NotNil(t, widget.Methods.Get, "should have GET method")
-				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems)
+				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems())
 			},
 		},
 		{
@@ -574,7 +574,7 @@ func TestGetAPI(t *testing.T) {
 	}
 }
 
-func TestParseBookstoreYAMLDirectly(t *testing.T) {
+func TestLoadFromJsonBookstore(t *testing.T) {
 	// Construct the path relative to the test file's location
 	yamlPath := filepath.Join("..", "..", "examples", "resource-definitions", "bookstore.yaml")
 
@@ -587,6 +587,7 @@ func TestParseBookstoreYAMLDirectly(t *testing.T) {
 	require.NoError(t, err, "Failed to convert YAML to JSON")
 
 	apiResult, err := LoadAPIFromJson(jsonData)
+	require.NoError(t, err, "Failed to load API from JSON")
 	err = json.Unmarshal(jsonData, &apiResult)
 	require.NoError(t, err, "Failed to unmarshal JSON into api.API struct")
 
@@ -627,6 +628,7 @@ func TestParseBookstoreYAMLDirectly(t *testing.T) {
 	assert.Equal(t, "array", bookResource.Schema.Properties["isbn"].Type)
 	assert.NotNil(t, bookResource.Methods.List, "'book' should have List method")
 	assert.True(t, bookResource.Methods.List.HasUnreachableResources)
+	assert.True(t, bookResource.Methods.Create.SupportsUserSettableCreate)
 	assert.Len(t, bookResource.CustomMethods, 1, "'book' should have 1 custom method")
 	assert.Equal(t, "archive", bookResource.CustomMethods[0].Name)
 }

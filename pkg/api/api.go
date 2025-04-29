@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -27,19 +26,6 @@ type Contact struct {
 	Name  string
 	Email string
 	URL   string
-}
-
-func LoadAPIFromJson(data []byte) (*API, error) {
-	api := &API{}
-	err := json.Unmarshal(data, api)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling API: %v", err)
-	}
-	err = addImplicitFields(api)
-	if err != nil {
-		return nil, fmt.Errorf("error adding defaults to API: %v", err)
-	}
-	return api, nil
 }
 
 func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
@@ -350,23 +336,26 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 			parents = append(parents, parentResource)
 			parentResource.Children = append(parentResource.Children, r)
 		}
+		patternElems := strings.Split(strings.TrimPrefix(s.XAEPResource.Patterns[0], "/"), "/")
 		r = &Resource{
-			Singular:     s.XAEPResource.Singular,
-			Plural:       s.XAEPResource.Plural,
-			Parents:      parents,
-			Children:     []*Resource{},
-			PatternElems: strings.Split(strings.TrimPrefix(s.XAEPResource.Patterns[0], "/"), "/"),
-			Schema:       s,
+			Singular:        s.XAEPResource.Singular,
+			Plural:          s.XAEPResource.Plural,
+			Parents:         s.XAEPResource.Parents,
+			parentResources: parents,
+			Children:        []*Resource{},
+			patternElems:    patternElems,
+			Schema:          s,
 		}
 	} else {
 		// best effort otherwise
 		r = &Resource{
-			Schema:       s,
-			PatternElems: pattern,
-			Singular:     singular,
-			Parents:      []*Resource{},
-			Children:     []*Resource{},
-			Plural:       plural(singular),
+			Schema:          s,
+			patternElems:    pattern,
+			Singular:        singular,
+			Parents:         []string{},
+			parentResources: []*Resource{},
+			Children:        []*Resource{},
+			Plural:          plural(singular),
 		}
 	}
 	resourceBySingular[singular] = r
@@ -407,20 +396,4 @@ func getContact(contact openapi.Contact) *Contact {
 // of the singular form, which works for most cases.
 func plural(singular string) string {
 	return singular + "s"
-}
-
-// addImplicitFields adds implicit fields to the API object,
-// such as the "path" variable in the resource.
-func addImplicitFields(api *API) error {
-	// add the path variable to the resource
-	for _, r := range api.Resources {
-		if r.Schema.Properties != nil {
-			r.Schema.Properties[constants.FIELD_PATH_NAME] = openapi.Schema{
-				Type:            "string",
-				Description:     "The server-assigned path of the resource, which is unique within the service.",
-				XAEPFieldNumber: constants.FIELD_PATH_NUMBER,
-			}
-		}
-	}
-	return nil
 }

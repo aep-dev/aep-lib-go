@@ -12,19 +12,11 @@ import (
 func TestCreate(t *testing.T) {
 	// Create a test server
 	httpmock.Activate()
-	httpmock.RegisterResponder("POST", "http://localhost:8081/publishers/my-pub/books",
-		httpmock.NewStringResponder(200, "{\"path\":\"/publishers/my-pub/books/1\"}"))
+	httpmock.RegisterResponder("POST", "http://localhost:8081/publishers",
+		httpmock.NewStringResponder(200, "{\"path\":\"/publishers/1\"}"))
 
-	// Create a test resource
-	r := &api.Resource{
-		Methods: api.Methods{
-			Create: &api.CreateMethod{
-				SupportsUserSettableCreate: false,
-			},
-		},
-		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
-	}
-
+	a := api.ExampleAPI()
+	r := a.Resources["publisher"]
 	// Create a test context
 	ctx := context.Background()
 
@@ -33,9 +25,7 @@ func TestCreate(t *testing.T) {
 		"price": "1",
 	}
 
-	parameters := map[string]string{
-		"publisher": "my-pub",
-	}
+	parameters := map[string]string{}
 
 	c := NewClient(http.DefaultClient)
 
@@ -46,8 +36,8 @@ func TestCreate(t *testing.T) {
 	}
 
 	// Check the response
-	if data["path"] != "/publishers/my-pub/books/1" {
-		t.Errorf("expected id to be '/publishers/my-pub/books/1', got '%v'", data["path"])
+	if data["path"] != "/publishers/1" {
+		t.Errorf("expected id to be '/publishers/1', got '%v'", data["path"])
 	}
 }
 
@@ -57,15 +47,8 @@ func TestCreateWithUserSpecifiedId(t *testing.T) {
 	httpmock.RegisterResponder("POST", "http://localhost:8081/publishers/my-pub/books?id=my-book",
 		httpmock.NewStringResponder(200, "{\"path\":\"/publishers/my-pub/books/my-book\"}"))
 
-	// Create a test resource
-	r := &api.Resource{
-		Methods: api.Methods{
-			Create: &api.CreateMethod{
-				SupportsUserSettableCreate: true,
-			},
-		},
-		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
-	}
+	a := api.ExampleAPI()
+	r := a.Resources["book"]
 
 	// Create a test context
 	ctx := context.Background()
@@ -161,15 +144,8 @@ func TestList(t *testing.T) {
 	httpmock.RegisterResponder("GET", "http://localhost:8081/publishers/my-pub/books",
 		httpmock.NewStringResponder(200, "{\"results\":[{\"path\":\"/publishers/my-pub/books/1\", \"price\":\"2\"}]}"))
 
-	// Create a test resource
-	r := &api.Resource{
-		Methods: api.Methods{
-			Create: &api.CreateMethod{
-				SupportsUserSettableCreate: false,
-			},
-		},
-		PatternElems: []string{"publishers", "{publisher}", "books", "{book}"},
-	}
+	a := api.ExampleAPI()
+	r := a.Resources["book"]
 
 	// Create a test context
 	ctx := context.Background()

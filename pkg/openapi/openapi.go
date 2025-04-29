@@ -160,7 +160,7 @@ type Schema struct {
 	Type            string        `json:"type,omitempty"`
 	Format          string        `json:"format,omitempty"`
 	Items           *Schema       `json:"items,omitempty"`
-	Properties      Properties    `json:"properties,omitempty"`
+	Properties      Properties    `json:"properties"`
 	Ref             string        `json:"$ref,omitempty"`
 	XAEPResource    *XAEPResource `json:"x-aep-resource,omitempty"`
 	XAEPFieldNumber int           `json:"x-aep-field-number,omitempty"`

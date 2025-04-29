@@ -562,13 +562,13 @@ func generateHTTPPath(r *api.Resource) string {
 	elements := []string{api.CollectionName(r)}
 	if len(r.Parents) > 0 {
 		// TODO: handle multiple parents
-		p := r.Parents[0]
+		p := r.ParentResources()[0]
 		for p != nil {
 			elements = append([]string{api.CollectionName(p)}, elements...)
-			if len(p.Parents) == 0 {
+			if len(p.ParentResources()) == 0 {
 				break
 			}
-			p = p.Parents[0]
+			p = p.ParentResources()[0]
 		}
 	}
 	return fmt.Sprintf("%v/*", strings.Join(elements, "/*/"))
@@ -580,7 +580,7 @@ func generateParentHTTPPath(r *api.Resource) string {
 		return fmt.Sprintf("/%v", strings.ToLower(r.Plural))
 	}
 	if len(r.Parents) > 0 {
-		parentPath = fmt.Sprintf("%v", generateHTTPPath(r.Parents[0]))
+		parentPath = fmt.Sprintf("%v", generateHTTPPath(r.ParentResources()[0]))
 	}
 	return fmt.Sprintf("/{parent=%v}/%v", parentPath, api.CollectionName(r))
 }
@@ -668,7 +668,7 @@ func addForceField(_ *api.API, _ *api.Resource, mb *builder.MessageBuilder) {
 
 func resourceDescriptor(a *api.API, r *api.Resource) *annotations.ResourceDescriptor {
 	patterns := []string{
-		strings.Join(r.PatternElems, "/"),
+		strings.Join(r.PatternElems(), "/"),
 	}
 	return &annotations.ResourceDescriptor{
 		Type:     fmt.Sprintf("%s/%s", a.Name, r.Singular),
