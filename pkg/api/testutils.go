@@ -163,7 +163,7 @@ func ExampleAPI() *API {
 			"tome":         tome,
 		},
 	}
-	if err := addImplicitFields(api); err != nil {
+	if err := addImplicitFieldsAndValidate(api); err != nil {
 		panic(err)
 	}
 	return api

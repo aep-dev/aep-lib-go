@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"github.com/aep-dev/aep-lib-go/pkg/api"
+	"github.com/jhump/protoreflect/desc/builder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -182,4 +183,30 @@ func TestToProtoServiceName(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestAddCustomMethodWithNilResponse(t *testing.T) {
+	// Setup
+	a := &api.API{Name: "example"}
+	r := &api.Resource{
+		Singular: "book",
+		Plural:   "books",
+	}
+	cm := &api.CustomMethod{
+		Name:     "archive",
+		Method:   "POST",
+		Response: nil, // Response is nil
+	}
+	resMsg := NewWrappedMessageBuilder(builder.NewMessage("Book"))
+	fb := builder.NewFile("test.proto")
+	sb := builder.NewService("TestService")
+	ms := &MessageStorage{Messages: map[string]Message{"example/book": resMsg}}
+	err := AddCustomMethod(a, r, cm, resMsg, fb, ms, sb)
+	assert.NoError(t, err, "AddCustomMethod should not return an error")
+	method := sb.GetMethod("ArchiveBook")
+	assert.NotNil(t, method, "Method should not be nil")
+
+	// Check that the response type is set to google.protobuf.Empty
+	assert.NotNil(t, method.Options, "Method options should not be nil")
+	assert.Equal(t, method.RespType.GetTypeName(), "google.protobuf.Empty", "Response type should be google.protobuf.Empty")
 }

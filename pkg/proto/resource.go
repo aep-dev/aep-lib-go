@@ -512,7 +512,11 @@ func AddApply(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuild
 
 func AddCustomMethod(a *api.API, r *api.Resource, cm *api.CustomMethod, resMsg Message, fb *builder.FileBuilder, m *MessageStorage, sb *builder.ServiceBuilder) error {
 	methodName := cases.KebabToCamelCase(cm.Name) + toMessageName(r.Singular)
-	requestMb, err := GenerateMessage(methodName+"Request", cm.Request, a, m)
+	request := cm.Request
+	if request == nil {
+		request = &openapi.Schema{}
+	}
+	requestMb, err := GenerateMessage(methodName+"Request", request, a, m)
 	if err != nil {
 		return err
 	}
@@ -520,19 +524,29 @@ func AddCustomMethod(a *api.API, r *api.Resource, cm *api.CustomMethod, resMsg M
 		LeadingComment: fmt.Sprintf("Request message for the %v method", cm.Name),
 	})
 	addPathField(a, r, requestMb)
-	responseMb, err := GenerateMessage(methodName+"Response", cm.Response, a, m)
-	if err != nil {
-		return err
+	var responseMsg *builder.RpcType
+	if cm.Response != nil {
+		responseMb, err := GenerateMessage(methodName+"Response", cm.Response, a, m)
+		if err != nil {
+			return err
+		}
+		responseMb.SetComments(builder.Comments{
+			LeadingComment: fmt.Sprintf("Response message for the %v method", cm.Name),
+		})
+		fb.AddMessage(responseMb)
+		responseMsg = builder.RpcTypeMessage(responseMb, false)
+	} else {
+		emptyMsg, err := desc.LoadMessageDescriptor("google.protobuf.Empty")
+		if err != nil {
+			return fmt.Errorf("error loading message descriptor for google.protobuf.Empty: %v", err)
+		}
+		responseMsg = builder.RpcTypeImportedMessage(emptyMsg, false)
 	}
-	responseMb.SetComments(builder.Comments{
-		LeadingComment: fmt.Sprintf("Response message for the %v method", cm.Name),
-	})
 	fb.AddMessage(requestMb)
-	fb.AddMessage(responseMb)
 	method := buildMethod(
 		methodName,
 		builder.RpcTypeMessage(requestMb, false),
-		builder.RpcTypeMessage(responseMb, false),
+		responseMsg,
 		cm.IsLongRunning,
 	)
 	method.SetComments(builder.Comments{
