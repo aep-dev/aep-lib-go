@@ -39,27 +39,41 @@ func (o *OpenAPI) OASVersion() string {
 }
 
 func (o *OpenAPI) DereferenceSchema(schema Schema) (*Schema, error) {
-	// we dereference only local schemas for now.
-	// TODO: add support for external schemas (prefixed by //)
-	if schema.Ref != "" && strings.HasPrefix(schema.Ref, "#components/schema") {
-		parts := strings.Split(schema.Ref, "/")
-		key := parts[len(parts)-1]
-		var childSchema Schema
-		var ok bool
-		switch o.OASVersion() {
-		case OAS2:
-			childSchema, ok = o.Definitions[key]
-			slog.Debug("oasv2.0", "key", key)
-			if !ok {
-				return nil, fmt.Errorf("schema %q not found", schema.Ref)
+	if schema.Ref != "" {
+		var refSchema Schema
+		if strings.HasPrefix(schema.Ref, "https://") || strings.HasPrefix(schema.Ref, "http://") {
+			body, err := readFileOrURL(schema.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error fetching external schema %q: %w", schema.Ref, err)
 			}
-		default:
-			childSchema, ok = o.Components.Schemas[key]
-			if !ok {
-				return nil, fmt.Errorf("schema %q not found", schema.Ref)
+			slog.Debug("Fetched schema body", "body", string(body))
+
+			if err := json.Unmarshal(body, &refSchema); err != nil {
+				return nil, fmt.Errorf("error unmarshalingexternal schema %q: %w", schema.Ref, err)
 			}
+		} else if strings.HasPrefix(schema.Ref, "#") {
+			// Handle local schema references
+			parts := strings.Split(schema.Ref, "/")
+			key := parts[len(parts)-1]
+			var ok bool
+			switch o.OASVersion() {
+			case OAS2:
+				refSchema, ok = o.Definitions[key]
+				slog.Debug("oasv2.0", "key", key)
+				if !ok {
+					return nil, fmt.Errorf("schema %q not found", schema.Ref)
+				}
+			default:
+				refSchema, ok = o.Components.Schemas[key]
+				if !ok {
+					return nil, fmt.Errorf("schema %q not found", schema.Ref)
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("unsupported schema reference %q", schema.Ref)
 		}
-		return o.DereferenceSchema(childSchema)
+		slog.Debug("ref schema", "schema", refSchema)
+		return o.DereferenceSchema(refSchema)
 	}
 	return &schema, nil
 }

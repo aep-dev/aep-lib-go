@@ -6,6 +6,7 @@ import (
 
 	"github.com/aep-dev/aep-lib-go/pkg/constants"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
+	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -628,4 +629,34 @@ func TestLongRunningMethods(t *testing.T) {
 		"Expected response schema to reference aep.api.Operation for DeleteMethod")
 	assert.NotNil(t, deleteOperation.XAEPLongRunningOperation,
 		"Expected XAEPLongRunningOperation to be set for DeleteMethod")
+}
+
+func TestDereferenceSchemaWithExternalReference(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// Register a mock responder for the external schema
+	httpmock.RegisterResponder("GET", "https://localhost:8080/mock-schema.json",
+		httpmock.NewStringResponder(200, `{
+			"type": "object",
+			"properties": {
+				"name": {"type": "string"},
+				"age": {"type": "integer"}
+			}
+		}`))
+
+	// Test case
+	externalSchemaRef := "https://localhost:8080/mock-schema.json"
+	schema := openapi.Schema{Ref: externalSchemaRef}
+	openAPI := &openapi.OpenAPI{}
+
+	resolvedSchema, err := openAPI.DereferenceSchema(schema)
+	assert.NoError(t, err)
+	assert.NotNil(t, resolvedSchema)
+
+	// Additional assertions for debugging
+	assert.Equal(t, "object", resolvedSchema.Type, "Expected schema type to be 'object'")
+	assert.NotNil(t, resolvedSchema.Properties, "Expected schema properties to be populated")
+	assert.Contains(t, resolvedSchema.Properties, "name", "Expected 'name' property in schema")
+	assert.Contains(t, resolvedSchema.Properties, "age", "Expected 'age' property in schema")
 }
