@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	OAS2        = "2.0"
-	OAS3        = "3.0"
-	ContentType = "application/json"
+	OAS2             = "2.0"
+	OAS3             = "3.0"
+	APPLICATION_JSON = "application/json"
+	JSON_MERGE_PATCH = "application/merge-patch+json"
 )
 
 type OpenAPI struct {
@@ -78,22 +79,22 @@ func (o *OpenAPI) DereferenceSchema(schema Schema) (*Schema, error) {
 	return &schema, nil
 }
 
-func (o *OpenAPI) GetSchemaFromResponse(r Response) *Schema {
+func (o *OpenAPI) GetSchemaFromResponse(r Response, contentType string) *Schema {
 	switch o.OASVersion() {
 	case OAS2:
 		return r.Schema
 	default:
-		ct := r.Content[ContentType]
+		ct := r.Content[contentType]
 		return ct.Schema
 	}
 }
 
-func (o *OpenAPI) GetSchemaFromRequestBody(r RequestBody) *Schema {
+func (o *OpenAPI) GetSchemaFromRequestBody(r RequestBody, contentType string) *Schema {
 	switch o.OASVersion() {
 	case OAS2:
 		return r.Schema
 	default:
-		ct := r.Content[ContentType]
+		ct := r.Content[contentType]
 		return ct.Schema
 	}
 }

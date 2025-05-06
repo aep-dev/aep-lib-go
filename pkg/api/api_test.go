@@ -77,7 +77,7 @@ var basicOpenAPI = &openapi.OpenAPI{
 				Responses: map[string]openapi.Response{
 					"200": {
 						Content: map[string]openapi.MediaType{
-							"application/json": {
+							"application/merge-patch+json": {
 								Schema: &openapi.Schema{
 									Ref: "#/components/schemas/Widget",
 								},
@@ -476,7 +476,7 @@ func TestGetAPI(t *testing.T) {
 							Responses: map[string]openapi.Response{
 								"200": {
 									Content: map[string]openapi.MediaType{
-										"application/json": {
+										"application/merge-patch+json": {
 											Schema: &openapi.Schema{
 												Ref: AEP_OPERATION_REF,
 											},

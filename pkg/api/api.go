@@ -58,7 +58,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			if pathItem.Post != nil {
 				if resp, ok := pathItem.Post.Responses["200"]; ok {
 					lroDetails = pathItem.Post.XAEPLongRunningOperation
-					schema := api.GetSchemaFromResponse(resp)
+					schema := api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					responseSchema := &openapi.Schema{}
 					if lroDetails != nil {
 						schema = lroDetails.Response.Schema
@@ -73,7 +73,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 					if pathItem.Post.RequestBody == nil {
 						return nil, fmt.Errorf("custom method %q has a POST response, but no request body", p.CustomMethodName)
 					}
-					schema = api.GetSchemaFromRequestBody(*pathItem.Post.RequestBody)
+					schema = api.GetSchemaFromRequestBody(*pathItem.Post.RequestBody, openapi.APPLICATION_JSON)
 					requestSchema, err := api.DereferenceSchema(*schema)
 					if err != nil {
 						return nil, fmt.Errorf("error dereferencing schema %q: %v", schema.Ref, err)
@@ -90,7 +90,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
 					lroDetails = pathItem.Post.XAEPLongRunningOperation
-					schema := api.GetSchemaFromResponse(resp)
+					schema := api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					responseSchema := &openapi.Schema{}
 					if lroDetails != nil {
 						schema = lroDetails.Response.Schema
@@ -120,14 +120,14 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			}
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
-					sRef = api.GetSchemaFromResponse(resp)
+					sRef = api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					r.Methods.Get = &GetMethod{}
 				}
 			}
 			if pathItem.Patch != nil {
 				lroDetails = pathItem.Patch.XAEPLongRunningOperation
 				if resp, ok := pathItem.Patch.Responses["200"]; ok {
-					sRef = api.GetSchemaFromResponse(resp)
+					sRef = api.GetSchemaFromResponse(resp, openapi.JSON_MERGE_PATCH)
 					r.Methods.Update = &UpdateMethod{
 						IsLongRunning: lroDetails != nil,
 					}
@@ -139,7 +139,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 				// check if there is a query parameter "id"
 				lroDetails = pathItem.Post.XAEPLongRunningOperation
 				if resp, ok := pathItem.Post.Responses["200"]; ok {
-					sRef = api.GetSchemaFromResponse(resp)
+					sRef = api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					supportsUserSettableCreate := false
 					for _, param := range pathItem.Post.Parameters {
 						if param.Name == "id" {
@@ -156,7 +156,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			// list method
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
-					respSchema := api.GetSchemaFromResponse(resp)
+					respSchema := api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					if respSchema == nil {
 						slog.Warn(fmt.Sprintf("resource %q has a LIST method with a response schema, but the response schema is nil.", path))
 					} else {
