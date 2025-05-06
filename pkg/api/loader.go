@@ -14,7 +14,7 @@ func LoadAPIFromJson(data []byte) (*API, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling API: %v", err)
 	}
-	err = addImplicitFieldsAndValidate(api)
+	err = AddImplicitFieldsAndValidate(api)
 	if err != nil {
 		return nil, fmt.Errorf("error adding defaults to API: %v", err)
 	}
@@ -23,7 +23,7 @@ func LoadAPIFromJson(data []byte) (*API, error) {
 
 // addImplicitFieldsAndValidate adds implicit fields to the API object,
 // such as the "path" variable in the resource.
-func addImplicitFieldsAndValidate(api *API) error {
+func AddImplicitFieldsAndValidate(api *API) error {
 	// add the path variable to the resource
 	for _, r := range api.Resources {
 		r.API = api
