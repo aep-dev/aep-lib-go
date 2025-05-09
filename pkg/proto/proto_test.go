@@ -79,6 +79,7 @@ func TestAPIToProto(t *testing.T) {
 				// verify that ArchiveTome is a long-running-operation.
 				"rpc ArchiveTome ( ArchiveTomeRequest ) returns ( aep.api.Operation ) {",
 				"string id = 10014;",
+				"this file is generated.",
 			},
 		},
 	}
@@ -134,14 +135,14 @@ func TestAPIToProto(t *testing.T) {
 						strings.Contains(strings.ToLower(protoContent), "rpc "+methodNameLower+"(") ||
 						strings.Contains(protoContent, "rpc "+methodName+" (") ||
 						strings.Contains(protoContent, "rpc "+methodName+"("),
-					"Expected method %s not found in proto content", methodName)
+					"Expected method %q not found in proto content", methodName)
 			}
 
 			// Check for expected strings
 			for _, expectedString := range tt.expectStrings {
 				assert.True(t,
 					strings.Contains(protoContent, expectedString),
-					"Expected string %s not found in proto content", expectedString)
+					"Expected string %q not found in proto content", expectedString)
 			}
 
 			// Verify correct parent-child relationships in the API paths
