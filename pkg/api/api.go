@@ -89,7 +89,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			}
 			if pathItem.Get != nil {
 				if resp, ok := pathItem.Get.Responses["200"]; ok {
-					lroDetails = pathItem.Post.XAEPLongRunningOperation
+					lroDetails = pathItem.Get.XAEPLongRunningOperation
 					schema := api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					responseSchema := &openapi.Schema{}
 					if lroDetails != nil {
