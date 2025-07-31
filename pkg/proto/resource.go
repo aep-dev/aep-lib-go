@@ -177,6 +177,8 @@ func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStora
 			proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
 			f.SetOptions(o)
 		}
+		// Set the JSON name after any options are set to ensure it's not overwritten
+		f.SetJsonName(name)
 		mb.AddField(f)
 	}
 	return mb, nil
@@ -195,6 +197,7 @@ func protoField(name string, number int, s openapi.Schema, a *api.API, m *Messag
 	if s.Type == "array" {
 		f.SetRepeated()
 	}
+
 	return f, nil
 }
 
@@ -319,11 +322,13 @@ func AddUpdate(a *api.API, r *api.Resource, resMsg Message, fb *builder.FileBuil
 	// TODO: find a way to get the actual field mask proto descriptor type, without
 	// querying the global registry.
 	fieldMaskDescriptor, _ := desc.LoadMessageDescriptorForType(reflect.TypeOf(fieldmaskpb.FieldMask{}))
-	mb.AddField(builder.NewField(constants.FIELD_UPDATE_MASK_NAME, builder.FieldTypeImportedMessage(fieldMaskDescriptor)).
+	updateMaskField := builder.NewField(constants.FIELD_UPDATE_MASK_NAME, builder.FieldTypeImportedMessage(fieldMaskDescriptor)).
 		SetNumber(constants.FIELD_UPDATE_MASK_NUMBER).
 		SetComments(builder.Comments{
 			LeadingComment: "The update mask for the resource",
-		}))
+		})
+	updateMaskField.SetJsonName(constants.FIELD_UPDATE_MASK_NAME)
+	mb.AddField(updateMaskField)
 	fb.AddMessage(mb)
 	method := buildMethod(
 		"Update"+toMessageName(r.Singular),
@@ -394,24 +399,30 @@ func AddList(r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *build
 	})
 	addParentField(r, reqMb)
 	addPageToken(r, reqMb)
-	reqMb.AddField(builder.NewField(constants.FIELD_MAX_PAGE_SIZE_NAME, builder.FieldTypeInt32()).
+	maxPageSizeField := builder.NewField(constants.FIELD_MAX_PAGE_SIZE_NAME, builder.FieldTypeInt32()).
 		SetNumber(constants.FIELD_MAX_PAGE_SIZE_NUMBER).
 		SetComments(builder.Comments{
 			LeadingComment: "The maximum number of resources to return in a single page.",
-		}))
+		})
+	maxPageSizeField.SetJsonName(constants.FIELD_MAX_PAGE_SIZE_NAME)
+	reqMb.AddField(maxPageSizeField)
 	if r.Methods.List.SupportsSkip {
-		reqMb.AddField(builder.NewField(constants.FIELD_SKIP_NAME, builder.FieldTypeInt32()).
+		skipField := builder.NewField(constants.FIELD_SKIP_NAME, builder.FieldTypeInt32()).
 			SetNumber(constants.FIELD_SKIP_NUMBER).
 			SetComments(builder.Comments{
 				LeadingComment: "The number of resources to skip before returning the first resource in the page.",
-			}))
+			})
+		skipField.SetJsonName(constants.FIELD_SKIP_NAME)
+		reqMb.AddField(skipField)
 	}
 	if r.Methods.List.SupportsFilter {
-		reqMb.AddField(builder.NewField(constants.FIELD_FILTER_NAME, builder.FieldTypeString()).
+		filterField := builder.NewField(constants.FIELD_FILTER_NAME, builder.FieldTypeString()).
 			SetNumber(constants.FIELD_FILTER_NUMBER).
 			SetComments(builder.Comments{
 				LeadingComment: "The filter to apply to the list.",
-			}))
+			})
+		filterField.SetJsonName(constants.FIELD_FILTER_NAME)
+		reqMb.AddField(filterField)
 	}
 	fb.AddMessage(reqMb)
 	respMb := builder.NewMessage("List" + toMessageName(r.Plural) + "Response")
@@ -424,6 +435,7 @@ func AddList(r *api.Resource, resMsg Message, fb *builder.FileBuilder, sb *build
 		f := builder.NewField(constants.FIELD_UNREACHABLE_NAME, resMsg.FieldType()).SetNumber(constants.FIELD_UNREACHABLE_NUMBER).SetComments(builder.Comments{
 			LeadingComment: fmt.Sprintf("A list of %v that were not reachable.", r.Plural),
 		}).SetRepeated()
+		f.SetJsonName(constants.FIELD_UNREACHABLE_NAME)
 		respMb.AddField(f)
 	}
 	fb.AddMessage(respMb)
@@ -610,6 +622,7 @@ func addParentField(r *api.Resource, mb *builder.MessageBuilder) {
 			LeadingComment: fmt.Sprintf("A field for the parent of %v", r.Singular),
 		}).
 		SetOptions(o)
+	f.SetJsonName(constants.FIELD_PARENT_NAME)
 	mb.AddField(f)
 }
 
@@ -617,6 +630,7 @@ func addIdField(_ *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_ID_NAME, builder.FieldTypeString()).SetNumber(constants.FIELD_ID_NUMBER).SetComments(builder.Comments{
 		LeadingComment: "An id that uniquely identifies the resource within the collection",
 	})
+	f.SetJsonName(constants.FIELD_ID_NAME)
 	mb.AddField(f)
 }
 
@@ -632,6 +646,7 @@ func addPathField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
 			LeadingComment: "The globally unique identifier for the resource",
 		}).
 		SetOptions(o)
+	f.SetJsonName(constants.FIELD_PATH_NAME)
 	mb.AddField(f)
 }
 
@@ -644,6 +659,7 @@ func addResourceField(r *api.Resource, resMsg Message, mb *builder.MessageBuilde
 			LeadingComment: "The resource to perform the operation on.",
 		}).
 		SetOptions(o)
+	f.SetJsonName(cases.KebabToSnakeCase(r.Singular))
 	mb.AddField(f)
 }
 
@@ -651,6 +667,7 @@ func addResourcesField(r *api.Resource, resMsg Message, mb *builder.MessageBuild
 	f := builder.NewField(constants.FIELD_RESULTS_NAME, resMsg.FieldType()).SetNumber(constants.FIELD_RESULTS_NUMBER).SetComments(builder.Comments{
 		LeadingComment: fmt.Sprintf("A list of %v", r.Plural),
 	}).SetRepeated()
+	f.SetJsonName(constants.FIELD_RESULTS_NAME)
 	mb.AddField(f)
 }
 
@@ -658,6 +675,7 @@ func addPageToken(_ *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_PAGE_TOKEN_NAME, builder.FieldTypeString()).SetNumber(constants.FIELD_PAGE_TOKEN_NUMBER).SetComments(builder.Comments{
 		LeadingComment: "The page token indicating the starting point of the page",
 	})
+	f.SetJsonName(constants.FIELD_PAGE_TOKEN_NAME)
 	mb.AddField(f)
 }
 
@@ -665,6 +683,7 @@ func addNextPageToken(_ *api.Resource, mb *builder.MessageBuilder) {
 	f := builder.NewField(constants.FIELD_NEXT_PAGE_TOKEN_NAME, builder.FieldTypeString()).SetNumber(constants.FIELD_NEXT_PAGE_TOKEN_NUMBER).SetComments(builder.Comments{
 		LeadingComment: "The page token indicating the ending point of this response.",
 	})
+	f.SetJsonName(constants.FIELD_NEXT_PAGE_TOKEN_NAME)
 	mb.AddField(f)
 }
 
@@ -677,6 +696,7 @@ func addForceField(_ *api.API, _ *api.Resource, mb *builder.MessageBuilder) {
 			LeadingComment: "If true, the resource will be deleted, even if children still exist.",
 		}).
 		SetOptions(o)
+	f.SetJsonName(constants.FIELD_FORCE_NAME)
 	mb.AddField(f)
 }
 
