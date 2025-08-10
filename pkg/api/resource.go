@@ -97,7 +97,7 @@ func CollectionName(r *Resource) string {
 		parent := r.ParentResources()[0].Singular
 		// if collectionName has a prefix of parent, remove it
 		if strings.HasPrefix(collectionName, parent) {
-			collectionName = strings.TrimPrefix(collectionName, parent+"-")
+			collectionName = strings.TrimPrefix(collectionName, parent+"_")
 		}
 	}
 	return collectionName
@@ -108,8 +108,7 @@ func CollectionName(r *Resource) string {
 func (r *Resource) PatternElems() []string {
 	if len(r.patternElems) == 0 {
 		// Base pattern without params
-		patternElems := []string{CollectionName(r), fmt.Sprintf("{%s}", r.Singular)}
-		// pattern := fmt.Sprintf("%v/{%v}", CollectionName(r), r.Singular)
+		patternElems := []string{CollectionName(r), fmt.Sprintf("{%s_id}", r.Singular)}
 		if len(r.Parents) > 0 {
 			patternElems = append(
 				r.ParentResources()[0].PatternElems(),

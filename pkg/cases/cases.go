@@ -64,6 +64,25 @@ func KebabToPascalCase(s string) string {
 	return UpperFirst(KebabToCamelCase(s))
 }
 
+func SnakeToPascalCase(s string) string {
+	return UpperFirst(SnakeToCamelCase(s))
+}
+
+func SnakeToCamelCase(s string) string {
+	parts := strings.Split(s, "_")
+	for i := range parts {
+		if len(parts[i]) > 0 {
+			parts[i] = strings.ToUpper(string(parts[i][0])) + parts[i][1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+func PascalToSnakeCase(s string) string {
+	asKebab := PascalCaseToKebabCase(s)
+	return KebabToSnakeCase(asKebab)
+}
+
 func KebabToSnakeCase(s string) string {
 	return strings.ReplaceAll(s, "-", "_")
 }

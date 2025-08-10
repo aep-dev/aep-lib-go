@@ -58,7 +58,7 @@ var basicOpenAPI = &openapi.OpenAPI{
 				},
 			},
 		},
-		"/widgets/{widget}": {
+		"/widgets/{widget_id}": {
 			Get: &openapi.Operation{
 				Responses: map[string]openapi.Response{
 					"200": {
@@ -87,7 +87,7 @@ var basicOpenAPI = &openapi.OpenAPI{
 				},
 			},
 		},
-		"/widgets/{widget}:start": {
+		"/widgets/{widget_id}:start": {
 			Post: &openapi.Operation{
 				RequestBody: &openapi.RequestBody{
 					Content: map[string]openapi.MediaType{
@@ -121,7 +121,7 @@ var basicOpenAPI = &openapi.OpenAPI{
 				},
 			},
 		},
-		"/widgets/{widget}:stop": {
+		"/widgets/{widget_id}:stop": {
 			Post: &openapi.Operation{
 				RequestBody: &openapi.RequestBody{
 					Content: map[string]openapi.MediaType{
@@ -180,7 +180,7 @@ func TestGetAPI(t *testing.T) {
 
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
-				assert.Equal(t, widget.PatternElems(), []string{"widgets", "{widget}"})
+				assert.Equal(t, widget.PatternElems(), []string{"widgets", "{widget_id}"})
 				assert.Equal(t, sd.ServerURL, "https://api.example.com")
 				assert.NotNil(t, widget.Methods.Get, "should have GET method")
 				assert.NotNil(t, widget.Methods.List, "should have LIST method")
@@ -213,7 +213,7 @@ func TestGetAPI(t *testing.T) {
 			api: &openapi.OpenAPI{
 				OpenAPI: "3.1.0",
 				Paths: map[string]*openapi.PathItem{
-					"/widgets/{widget}": {
+					"/widgets/{widget_id}": {
 						Get: &openapi.Operation{
 							Responses: map[string]openapi.Response{
 								"200": {
@@ -240,7 +240,7 @@ func TestGetAPI(t *testing.T) {
 							XAEPResource: &openapi.XAEPResource{
 								Singular: "widget",
 								Plural:   "widgets",
-								Patterns: []string{"/widgets/{widget}"},
+								Patterns: []string{"/widgets/{widget_id}"},
 							},
 						},
 					},
@@ -251,7 +251,7 @@ func TestGetAPI(t *testing.T) {
 				assert.True(t, ok, "widget resource should exist")
 				assert.Equal(t, "widget", widget.Singular)
 				assert.Equal(t, "widgets", widget.Plural)
-				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems())
+				assert.Equal(t, []string{"widgets", "{widget_id}"}, widget.PatternElems())
 			},
 		},
 		{
@@ -308,7 +308,7 @@ func TestGetAPI(t *testing.T) {
 				Swagger: "2.0",
 				Servers: []openapi.Server{{URL: "https://api.example.com"}},
 				Paths: map[string]*openapi.PathItem{
-					"/widgets/{widget}": {
+					"/widgets/{widget_id}": {
 						Get: &openapi.Operation{
 							Responses: map[string]openapi.Response{
 								"200": {
@@ -333,7 +333,7 @@ func TestGetAPI(t *testing.T) {
 				widget, ok := sd.Resources["widget"]
 				assert.True(t, ok, "widget resource should exist")
 				assert.NotNil(t, widget.Methods.Get, "should have GET method")
-				assert.Equal(t, []string{"widgets", "{widget}"}, widget.PatternElems())
+				assert.Equal(t, []string{"widgets", "{widget_id}"}, widget.PatternElems())
 			},
 		},
 		{
@@ -442,7 +442,7 @@ func TestGetAPI(t *testing.T) {
 							},
 						},
 					},
-					"/widgets/{widget}": {
+					"/widgets/{widget_id}": {
 						Get: &openapi.Operation{
 							Responses: map[string]openapi.Response{
 								"200": {
@@ -486,7 +486,7 @@ func TestGetAPI(t *testing.T) {
 							},
 						},
 					},
-					"/widgets/{widget}:customOp": {
+					"/widgets/{widget_id}:customOp": {
 						Post: &openapi.Operation{
 							XAEPLongRunningOperation: &openapi.XAEPLongRunningOperation{
 								Response: openapi.XAEPLongRunningOperationResponse{
@@ -603,7 +603,7 @@ func TestLoadFromJsonBookstore(t *testing.T) {
 	assert.NotEmpty(t, apiResult.Resources, "Resources map should be populated")
 	assert.Contains(t, apiResult.Resources, "publisher", "Resources map should contain 'publisher'")
 	assert.Contains(t, apiResult.Resources, "book", "Resources map should contain 'book'")
-	assert.Contains(t, apiResult.Resources, "book-edition", "Resources map should contain 'book-edition'")
+	assert.Contains(t, apiResult.Resources, "book_edition", "Resources map should contain 'book-edition'")
 	assert.Contains(t, apiResult.Resources, "isbn", "Resources map should contain 'isbn'")
 
 	// Check some details of a resource
