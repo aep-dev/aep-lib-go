@@ -203,7 +203,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing schema %q: %v", sRef.Ref, err)
 			}
-			singular := cases.PascalCaseToKebabCase(key)
+			singular := cases.PascalToSnakeCase(key)
 			pattern := strings.Split(path, "/")[1:]
 			if !p.IsResourcePattern {
 				// deduplicate the singular, if applicable
@@ -213,10 +213,10 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 					parent = pattern[len(pattern)-3]
 					parent = parent[0 : len(parent)-1] // strip curly surrounding
 					if strings.HasPrefix(singular, parent) {
-						finalSingular = strings.TrimPrefix(singular, parent+"-")
+						finalSingular = strings.TrimPrefix(singular, parent+"_")
 					}
 				}
-				pattern = append(pattern, fmt.Sprintf("{%s}", finalSingular))
+				pattern = append(pattern, fmt.Sprintf("{%s_id}", finalSingular))
 			}
 			r2, err := getOrPopulateResource(singular, pattern, dereferencedSchema, resourceBySingular, api)
 			if err != nil {

@@ -3,10 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/aep-dev/aep-lib-go/pkg/constants"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
+
+var singularPluralRegex = regexp.MustCompile("^[a-z][a-z0-9_]*[a-z0-9]$")
 
 func LoadAPIFromJson(data []byte) (*API, error) {
 	api := &API{}
@@ -25,7 +28,16 @@ func LoadAPIFromJson(data []byte) (*API, error) {
 // such as the "path" variable in the resource.
 func AddImplicitFieldsAndValidate(api *API) error {
 	// add the path variable to the resource
-	for _, r := range api.Resources {
+	for name, r := range api.Resources {
+		if !singularPluralRegex.MatchString(name) {
+			return fmt.Errorf("resource name %s does not match the regex %s", name, singularPluralRegex.String())
+		}
+		if !singularPluralRegex.MatchString(r.Singular) {
+			return fmt.Errorf("singular resource name %s does not match the regex %s", r.Singular, singularPluralRegex.String())
+		}
+		if !singularPluralRegex.MatchString(r.Plural) {
+			return fmt.Errorf("plural resource name %s does not match the regex %s", r.Plural, singularPluralRegex.String())
+		}
 		r.API = api
 		if r.Schema.Properties == nil {
 			r.Schema.Properties = make(map[string]openapi.Schema)

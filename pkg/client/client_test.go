@@ -60,7 +60,7 @@ func TestCreateWithUserSpecifiedId(t *testing.T) {
 	}
 
 	parameters := map[string]string{
-		"publisher": "my-pub",
+		"publisher_id": "my-pub",
 	}
 
 	// Call the Create method
@@ -151,7 +151,7 @@ func TestList(t *testing.T) {
 	ctx := context.Background()
 
 	parameters := map[string]string{
-		"publisher": "my-pub",
+		"publisher_id": "my-pub",
 	}
 
 	c := NewClient(http.DefaultClient)

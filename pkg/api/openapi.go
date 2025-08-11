@@ -68,7 +68,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		}
 		idParam := openapi.Parameter{
 			In:       "path",
-			Name:     singular,
+			Name:     singular + "_id",
 			Required: true,
 			Schema: &openapi.Schema{
 				Type: "string",
@@ -83,7 +83,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			},
 		}
 		for _, pwp := range *parentPWPS {
-			resourcePath := fmt.Sprintf("%s%s/{%s}", pwp.Pattern, collection, singular)
+			resourcePath := fmt.Sprintf("%s%s/{%s_id}", pwp.Pattern, collection, singular)
 			patterns = append(patterns, resourcePath[1:])
 			if r.Methods.List != nil {
 				listPath := fmt.Sprintf("%s%s", pwp.Pattern, collection)
@@ -144,7 +144,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					})
 				}
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf("List%s", cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf("List%s", cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("List method for %s", r.Singular),
 					Parameters:  params,
 					Responses: map[string]openapi.Response{
@@ -177,7 +177,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					})
 				}
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf("Create%s", cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf("Create%s", cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Create method for %s", r.Singular),
 					Parameters:  params,
 					RequestBody: &bodyParam,
@@ -208,7 +208,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.Methods.Get != nil {
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf("Get%s", cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf("Get%s", cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Get method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
@@ -219,7 +219,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.Methods.Update != nil {
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf("Update%s", cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf("Update%s", cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Update method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					RequestBody: &openapi.RequestBody{
@@ -280,7 +280,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					})
 				}
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf("Delete%s", cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf("Delete%s", cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Delete method for %s", r.Singular),
 					Parameters:  params,
 					Responses: map[string]openapi.Response{
@@ -317,7 +317,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			}
 			if r.Methods.Apply != nil {
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf("Apply%s", cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf("Apply%s", cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Apply method for %s", r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					RequestBody: &bodyParam,
@@ -364,7 +364,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 				}
 				cmPath := fmt.Sprintf("%s:%s", resourcePath, custom.Name)
 				methodInfo := openapi.Operation{
-					OperationID: fmt.Sprintf(":%s%s", cases.KebabToPascalCase(custom.Name), cases.KebabToPascalCase(r.Singular)),
+					OperationID: fmt.Sprintf(":%s%s", cases.SnakeToPascalCase(custom.Name), cases.SnakeToPascalCase(r.Singular)),
 					Description: fmt.Sprintf("Custom method %s for %s", custom.Name, r.Singular),
 					Parameters:  append(pwp.Params, idParam),
 					Responses: map[string]openapi.Response{
@@ -481,9 +481,14 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 		params := []openapi.Parameter{}
 		for i := 0; i < len(r.patternElems)-2; i += 2 {
 			pElem := r.patternElems[i+1]
+			// Extract the parameter name without the _id suffix
+			paramName := pElem[1 : len(pElem)-1]
+			if strings.HasSuffix(paramName, "_id") {
+				paramName = paramName[:len(paramName)-3]
+			}
 			params = append(params, openapi.Parameter{
 				In:       "path",
-				Name:     pElem[1 : len(pElem)-1],
+				Name:     paramName,
 				Required: true,
 				Schema: &openapi.Schema{
 					Type: "string",
@@ -503,7 +508,7 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 	pwps := []PathWithParams{}
 	for _, parent := range r.ParentResources() {
 		singular := parent.Singular
-		basePattern := fmt.Sprintf("/%s/{%s}", CollectionName(parent), singular)
+		basePattern := fmt.Sprintf("/%s/{%s_id}", CollectionName(parent), singular)
 		baseParam := openapi.Parameter{
 			In:       "path",
 			Name:     singular,

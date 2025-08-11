@@ -143,7 +143,7 @@ func toProtoServiceName(serviceName string) string {
 }
 
 func toMessageName(resource string) string {
-	return cases.KebabToCamelCase(resource)
+	return cases.SnakeToCamelCase(resource)
 }
 
 func getSortedResources(a *api.API) []*api.Resource {

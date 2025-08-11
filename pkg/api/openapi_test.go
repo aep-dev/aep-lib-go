@@ -26,9 +26,9 @@ func TestToOpenAPI(t *testing.T) {
 			api:  exampleAPI,
 			expectedPaths: []string{
 				"/publishers",
-				"/publishers/{publisher}",
-				"/publishers/{publisher}/books",
-				"/publishers/{publisher}/books/{book}",
+				"/publishers/{publisher_id}",
+				"/publishers/{publisher_id}/books",
+				"/publishers/{publisher_id}/books/{book_id}",
 			},
 			expectedSchemas: []string{
 				"account",
@@ -42,12 +42,12 @@ func TestToOpenAPI(t *testing.T) {
 						OperationID: "CreatePublisher",
 					},
 				},
-				"/publishers/{publisher}": {
+				"/publishers/{publisher_id}": {
 					Get: &openapi.Operation{
 						OperationID: "GetPublisher",
 					},
 				},
-				"/publishers/{publisher}/books": {
+				"/publishers/{publisher_id}/books": {
 					Get: &openapi.Operation{
 						OperationID: "ListBook",
 						Parameters: []openapi.Parameter{
@@ -112,7 +112,7 @@ func TestToOpenAPI(t *testing.T) {
 						},
 					},
 				},
-				"/publishers/{publisher}/books/{book}": {
+				"/publishers/{publisher_id}/books/{book_id}": {
 					Get: &openapi.Operation{
 						OperationID: "GetBook",
 					},
@@ -145,7 +145,7 @@ func TestToOpenAPI(t *testing.T) {
 						OperationID: "DeleteBook",
 					},
 				},
-				"/publishers/{publisher}/books/{book}:archive": {
+				"/publishers/{publisher_id}/books/{book_id}:archive": {
 					Post: &openapi.Operation{
 						OperationID: ":ArchiveBook",
 						RequestBody: &openapi.RequestBody{
@@ -181,7 +181,7 @@ func TestToOpenAPI(t *testing.T) {
 				},
 			},
 			expectedListSchemas: map[string]*openapi.Schema{
-				"/publishers/{publisher}/books": {
+				"/publishers/{publisher_id}/books": {
 					Type: "object",
 					Properties: map[string]openapi.Schema{
 						"unreachable": {
@@ -199,19 +199,19 @@ func TestToOpenAPI(t *testing.T) {
 			name: "book edition",
 			api:  exampleAPI,
 			expectedPaths: []string{
-				"/publishers/{publisher}/books/{book}/editions",
-				"/publishers/{publisher}/books/{book}/editions/{book-edition}",
+				"/publishers/{publisher_id}/books/{book_id}/editions",
+				"/publishers/{publisher_id}/books/{book_id}/editions/{book_edition_id}",
 			},
 			expectedSchemas: []string{
 				"account",
 			},
 			expectedOperations: map[string]openapi.PathItem{
-				"/publishers/{publisher}/books/{book}/editions": {
+				"/publishers/{publisher_id}/books/{book_id}/editions": {
 					Get: &openapi.Operation{
 						OperationID: "ListBookEdition",
 					},
 				},
-				"/publishers/{publisher}/books/{book}/editions/{book-edition}": {
+				"/publishers/{publisher_id}/books/{book_id}/editions/{book_edition_id}": {
 					Get: &openapi.Operation{
 						OperationID: "GetBookEdition",
 					},
@@ -306,13 +306,13 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 		{
 			name: "with pattern elements",
 			resource: &Resource{
-				patternElems: []string{"databases", "{database}", "tables", "{table}"},
+				patternElems: []string{"databases", "{database_id}", "tables", "{table_id}"},
 				Singular:     "table",
 			},
 			wantCollection: "/tables",
 			wantPathParams: &[]PathWithParams{
 				{
-					Pattern: "/databases/{database}",
+					Pattern: "/databases/{database_id}",
 					Params: []openapi.Parameter{
 						{
 							In:       "path",
@@ -332,7 +332,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 		{
 			name: "with pattern elements no nesting",
 			resource: &Resource{
-				patternElems: []string{"databases", "{database}"},
+				patternElems: []string{"databases", "{database_id}"},
 				Singular:     "database",
 			},
 			wantCollection: "/databases",
@@ -359,7 +359,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 			wantCollection: "/tables",
 			wantPathParams: &[]PathWithParams{
 				{
-					Pattern: "/databases/{database}",
+					Pattern: "/databases/{database_id}",
 					Params: []openapi.Parameter{
 						{
 							In:       "path",
@@ -397,7 +397,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 			wantCollection: "/tables",
 			wantPathParams: &[]PathWithParams{
 				{
-					Pattern: "/accounts/{account}/databases/{database}",
+					Pattern: "/accounts/{account_id}/databases/{database_id}",
 					Params: []openapi.Parameter{
 						{
 							In:       "path",
@@ -519,8 +519,8 @@ func TestLongRunningOperation(t *testing.T) {
 	}
 
 	resource := &Resource{
-		Singular: "testResource",
-		Plural:   "testResources",
+		Singular: "test_resource",
+		Plural:   "test_resources",
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
@@ -535,7 +535,7 @@ func TestLongRunningOperation(t *testing.T) {
 		Name:      "Test API",
 		ServerURL: "https://api.example.com",
 		Resources: map[string]*Resource{
-			"testResource": resource,
+			"test_resource": resource,
 		},
 	}
 
@@ -543,7 +543,7 @@ func TestLongRunningOperation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, openAPI)
 
-	path := "/testResources/{testResource}:longRunningTest"
+	path := "/test_resources/{test_resource_id}:longRunningTest"
 	operation := openAPI.Paths[path].Post
 	assert.NotNil(t, operation, "Expected POST operation for long-running test")
 	assert.Equal(t, AEP_OPERATION_REF,
@@ -555,8 +555,8 @@ func TestLongRunningOperation(t *testing.T) {
 
 func TestLongRunningMethods(t *testing.T) {
 	resource := &Resource{
-		Singular: "testResource",
-		Plural:   "testResources",
+		Singular: "test_resource",
+		Plural:   "test_resources",
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
@@ -584,7 +584,7 @@ func TestLongRunningMethods(t *testing.T) {
 		Name:      "Test API",
 		ServerURL: "https://api.example.com",
 		Resources: map[string]*Resource{
-			"testResource": resource,
+			"test_resource": resource,
 		},
 	}
 
@@ -593,7 +593,7 @@ func TestLongRunningMethods(t *testing.T) {
 	assert.NotNil(t, openAPI)
 
 	// Validate CreateMethod
-	createPath := "/testResources"
+	createPath := "/test_resources"
 	createOperation := openAPI.Paths[createPath].Post
 	assert.NotNil(t, createOperation, "Expected POST operation for CreateMethod")
 	assert.Equal(t, AEP_OPERATION_REF,
@@ -603,7 +603,7 @@ func TestLongRunningMethods(t *testing.T) {
 		"Expected XAEPLongRunningOperation to be set for CreateMethod")
 
 	// Validate ApplyMethod
-	applyPath := "/testResources/{testResource}"
+	applyPath := "/test_resources/{test_resource_id}"
 	applyOperation := openAPI.Paths[applyPath].Put
 	assert.NotNil(t, applyOperation, "Expected PUT operation for ApplyMethod")
 	assert.Equal(t, AEP_OPERATION_REF,
