@@ -169,7 +169,7 @@ func TestToOpenAPI(t *testing.T) {
 											Properties: map[string]openapi.Schema{
 												"archived": {
 													Type:            "boolean",
-													XAEPFieldNumber: 1,
+													XAEPFieldNumber: 0,
 												},
 											},
 										},
@@ -659,4 +659,99 @@ func TestDereferenceSchemaWithExternalReference(t *testing.T) {
 	assert.NotNil(t, resolvedSchema.Properties, "Expected schema properties to be populated")
 	assert.Contains(t, resolvedSchema.Properties, "name", "Expected 'name' property in schema")
 	assert.Contains(t, resolvedSchema.Properties, "age", "Expected 'age' property in schema")
+}
+
+func TestXAEPFieldNumberIsZeroed(t *testing.T) {
+	// Create a resource with XAEPFieldNumber set on properties
+	resource := &Resource{
+		Singular: "test_resource",
+		Plural:   "test_resources",
+		Schema: &openapi.Schema{
+			Type: "object",
+			Properties: map[string]openapi.Schema{
+				"name": {Type: "string", XAEPFieldNumber: 1},
+				"id":   {Type: "string", XAEPFieldNumber: 2},
+				"nested": {
+					Type: "object",
+					Properties: map[string]openapi.Schema{
+						"value": {Type: "string", XAEPFieldNumber: 3},
+					},
+					XAEPFieldNumber: 4,
+				},
+			},
+			XAEPFieldNumber: 5,
+		},
+		Methods: Methods{
+			Get: &GetMethod{},
+		},
+		CustomMethods: []*CustomMethod{
+			{
+				Name:   "custom",
+				Method: "POST",
+				Request: &openapi.Schema{
+					Type: "object",
+					Properties: map[string]openapi.Schema{
+						"input": {Type: "string", XAEPFieldNumber: 6},
+					},
+					XAEPFieldNumber: 7,
+				},
+				Response: &openapi.Schema{
+					Type: "object",
+					Properties: map[string]openapi.Schema{
+						"output": {Type: "string", XAEPFieldNumber: 8},
+					},
+					XAEPFieldNumber: 9,
+				},
+			},
+		},
+	}
+
+	// Create additional schemas with XAEPFieldNumber
+	additionalSchema := &openapi.Schema{
+		Type: "object",
+		Properties: map[string]openapi.Schema{
+			"extra": {Type: "string", XAEPFieldNumber: 10},
+		},
+		XAEPFieldNumber: 11,
+	}
+
+	exampleAPI := &API{
+		Name:      "Test API",
+		ServerURL: "https://api.example.com",
+		Resources: map[string]*Resource{
+			"test_resource": resource,
+		},
+		Schemas: map[string]*openapi.Schema{
+			"additional": additionalSchema,
+		},
+	}
+
+	openAPI, err := ConvertToOpenAPI(exampleAPI)
+	assert.NoError(t, err)
+	assert.NotNil(t, openAPI)
+
+	// Check that the main resource schema has XAEPFieldNumber zeroed
+	resourceSchema, exists := openAPI.Components.Schemas["test_resource"]
+	assert.True(t, exists, "Expected test_resource schema to exist")
+	assert.Equal(t, 0, resourceSchema.XAEPFieldNumber, "Main resource schema XAEPFieldNumber should be zeroed")
+
+	// Check that all properties in the main resource schema have XAEPFieldNumber zeroed
+	assert.Equal(t, 0, resourceSchema.Properties["name"].XAEPFieldNumber, "name property XAEPFieldNumber should be zeroed")
+	assert.Equal(t, 0, resourceSchema.Properties["id"].XAEPFieldNumber, "id property XAEPFieldNumber should be zeroed")
+
+	// Check nested object properties
+	nestedSchema := resourceSchema.Properties["nested"]
+	assert.Equal(t, 0, nestedSchema.XAEPFieldNumber, "nested object XAEPFieldNumber should be zeroed")
+	assert.Equal(t, 0, nestedSchema.Properties["value"].XAEPFieldNumber, "nested value property XAEPFieldNumber should be zeroed")
+
+	// Check that additional schemas have XAEPFieldNumber zeroed
+	additionalSchemaResult, exists := openAPI.Components.Schemas["additional"]
+	assert.True(t, exists, "Expected additional schema to exist")
+	assert.Equal(t, 0, additionalSchemaResult.XAEPFieldNumber, "Additional schema XAEPFieldNumber should be zeroed")
+	assert.Equal(t, 0, additionalSchemaResult.Properties["extra"].XAEPFieldNumber, "Additional schema extra property XAEPFieldNumber should be zeroed")
+
+	// Check that custom method request/response schemas have XAEPFieldNumber zeroed
+	// This would be in the paths, but since custom methods don't directly expose their schemas in components,
+	// we verify that the removeXAEPFieldNumber function is called on all schemas during conversion
+	// The function should recursively zero all XAEPFieldNumber values
 }

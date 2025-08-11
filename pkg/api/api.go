@@ -102,7 +102,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 							return nil, fmt.Errorf("error dereferencing schema %v: %v", schema.Ref, err)
 						}
 					}
-					customMethodsByPattern[pattern] = append(r.CustomMethods, &CustomMethod{
+					customMethodsByPattern[pattern] = append(customMethodsByPattern[pattern], &CustomMethod{
 						Name:          p.CustomMethodName,
 						Method:        "GET",
 						Response:      responseSchema,

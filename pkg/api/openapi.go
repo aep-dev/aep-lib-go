@@ -38,6 +38,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			return nil, fmt.Errorf("schema for resource %s is nil", r.Singular)
 		}
 		d := r.Schema
+		removeXAEPFieldNumber(d)
 		// if it is a resource, add paths
 		collection, parentPWPS := generateParentPatternsWithParams(r)
 		// Ensure parentPWPS is not nil before dereferencing
@@ -358,6 +359,9 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						Type: "object",
 					}
 				}
+				// Remove XAEPFieldNumber from custom method schemas
+				removeXAEPFieldNumber(custom.Request)
+				removeXAEPFieldNumber(custom.Response)
 				methodType := "get"
 				if custom.Method == "POST" {
 					methodType = "post"
@@ -420,7 +424,10 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 		components.Schemas[r.Singular] = *d
 	}
 	for k, v := range api.Schemas {
-		components.Schemas[k] = *v
+		// Create a copy of the schema to avoid modifying the original
+		schemaCopy := *v
+		removeXAEPFieldNumber(&schemaCopy)
+		components.Schemas[k] = schemaCopy
 	}
 
 	contact := openapi.Contact{}
@@ -554,5 +561,18 @@ func addMethodToPath(paths map[string]*openapi.PathItem, path, method string, me
 		methods.Put = &methodInfo
 	case "delete":
 		methods.Delete = &methodInfo
+	}
+}
+
+// removeXAEPFieldNumber removes the x-aep-field-number from the schema.
+// Currently x-aep-field-number is not an official annotation in the AEPs,
+// and adding it will confuse consumers.
+func removeXAEPFieldNumber(schema *openapi.Schema) {
+	schema.XAEPFieldNumber = 0
+	if schema.Properties != nil {
+		for key, property := range schema.Properties {
+			removeXAEPFieldNumber(&property)
+			schema.Properties[key] = property
+		}
 	}
 }
