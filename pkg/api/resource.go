@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aep-dev/aep-lib-go/pkg/cases"
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
 
@@ -97,18 +98,21 @@ func CollectionName(r *Resource) string {
 		parent := r.ParentResources()[0].Singular
 		// if collectionName has a prefix of parent, remove it
 		if strings.HasPrefix(collectionName, parent) {
-			collectionName = strings.TrimPrefix(collectionName, parent+"_")
+			collectionName = strings.TrimPrefix(collectionName, parent+"-")
 		}
 	}
-	return collectionName
+	// Convert to kebab-case for path elements
+	return cases.SnakeToKebabCase(collectionName)
 }
 
 // GeneratePatternStrings generates the pattern strings for a resource
 // TODO(yft): support multiple parents
 func (r *Resource) PatternElems() []string {
 	if len(r.patternElems) == 0 {
+		// Convert kebab-case singular to snake_case for path variables
+		singularSnake := cases.KebabToSnakeCase(r.Singular)
 		// Base pattern without params
-		patternElems := []string{CollectionName(r), fmt.Sprintf("{%s_id}", r.Singular)}
+		patternElems := []string{CollectionName(r), fmt.Sprintf("{%s_id}", singularSnake)}
 		if len(r.Parents) > 0 {
 			patternElems = append(
 				r.ParentResources()[0].PatternElems(),

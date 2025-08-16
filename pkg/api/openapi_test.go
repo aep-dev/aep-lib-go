@@ -543,7 +543,7 @@ func TestLongRunningOperation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, openAPI)
 
-	path := "/test_resources/{test_resource_id}:longRunningTest"
+	path := "/test-resources/{test_resource_id}:longRunningTest"
 	operation := openAPI.Paths[path].Post
 	assert.NotNil(t, operation, "Expected POST operation for long-running test")
 	assert.Equal(t, AEP_OPERATION_REF,
@@ -593,7 +593,7 @@ func TestLongRunningMethods(t *testing.T) {
 	assert.NotNil(t, openAPI)
 
 	// Validate CreateMethod
-	createPath := "/test_resources"
+	createPath := "/test-resources"
 	createOperation := openAPI.Paths[createPath].Post
 	assert.NotNil(t, createOperation, "Expected POST operation for CreateMethod")
 	assert.Equal(t, AEP_OPERATION_REF,
@@ -603,7 +603,7 @@ func TestLongRunningMethods(t *testing.T) {
 		"Expected XAEPLongRunningOperation to be set for CreateMethod")
 
 	// Validate ApplyMethod
-	applyPath := "/test_resources/{test_resource_id}"
+	applyPath := "/test-resources/{test_resource_id}"
 	applyOperation := openAPI.Paths[applyPath].Put
 	assert.NotNil(t, applyOperation, "Expected PUT operation for ApplyMethod")
 	assert.Equal(t, AEP_OPERATION_REF,

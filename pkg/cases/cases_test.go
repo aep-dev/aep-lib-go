@@ -74,6 +74,30 @@ func TestKebabToSnakeCase(t *testing.T) {
 	}
 }
 
+func TestSnakeToKebabCase(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"empty string", "", ""},
+		{"single word", "user", "user"},
+		{"multiple words", "user_profile", "user-profile"},
+		{"consecutive underscores", "api__response", "api--response"},
+		{"starting with underscore", "_background", "-background"},
+		{"ending with underscore", "foreground_", "foreground-"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SnakeToKebabCase(tt.input)
+			if got != tt.expected {
+				t.Errorf("SnakeToKebabCase(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
 func TestUpperFirst(t *testing.T) {
 	tests := []struct {
 		name     string

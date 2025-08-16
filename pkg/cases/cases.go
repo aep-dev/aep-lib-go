@@ -87,6 +87,10 @@ func KebabToSnakeCase(s string) string {
 	return strings.ReplaceAll(s, "-", "_")
 }
 
+func SnakeToKebabCase(s string) string {
+	return strings.ReplaceAll(s, "_", "-")
+}
+
 func UpperFirst(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }

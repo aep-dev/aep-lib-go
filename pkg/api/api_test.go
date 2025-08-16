@@ -603,7 +603,7 @@ func TestLoadFromJsonBookstore(t *testing.T) {
 	assert.NotEmpty(t, apiResult.Resources, "Resources map should be populated")
 	assert.Contains(t, apiResult.Resources, "publisher", "Resources map should contain 'publisher'")
 	assert.Contains(t, apiResult.Resources, "book", "Resources map should contain 'book'")
-	assert.Contains(t, apiResult.Resources, "book_edition", "Resources map should contain 'book-edition'")
+	assert.Contains(t, apiResult.Resources, "book-edition", "Resources map should contain 'book-edition'")
 	assert.Contains(t, apiResult.Resources, "isbn", "Resources map should contain 'isbn'")
 
 	// Check some details of a resource
@@ -631,4 +631,15 @@ func TestLoadFromJsonBookstore(t *testing.T) {
 	assert.True(t, bookResource.Methods.Create.SupportsUserSettableCreate)
 	assert.Len(t, bookResource.CustomMethods, 1, "'book' should have 1 custom method")
 	assert.Equal(t, "archive", bookResource.CustomMethods[0].Name)
+
+	// Check book-edition resource details
+	bookEditionResource := apiResult.Resources["book-edition"]
+	assert.NotNil(t, bookEditionResource, "'book-edition' resource should not be nil")
+	assert.Equal(t, "book-edition", bookEditionResource.Singular)
+	assert.Equal(t, "book-editions", bookEditionResource.Plural)
+	assert.NotNil(t, bookEditionResource.Schema, "'book-edition' resource schema should not be nil")
+	assert.Equal(t, "object", bookEditionResource.Schema.Type)
+	assert.Contains(t, bookEditionResource.Schema.Properties, "displayname")
+	assert.Equal(t, "string", bookEditionResource.Schema.Properties["displayname"].Type)
+	assert.NotNil(t, bookEditionResource.Methods.List, "'book-edition' should have List method")
 }

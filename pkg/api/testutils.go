@@ -119,10 +119,10 @@ func ExampleAPI() *API {
 	}
 	publisher.Children = append(publisher.Children, tome)
 
-	// Create book_edition resource
+	// Create book-edition resource
 	bookEdition := &Resource{
-		Singular:        "book_edition",
-		Plural:          "book_editions",
+		Singular:        "book-edition",
+		Plural:          "book-editions",
 		Parents:         []string{"book"},
 		parentResources: []*Resource{book},
 		Schema: &openapi.Schema{
@@ -157,7 +157,7 @@ func ExampleAPI() *API {
 		},
 		Resources: map[string]*Resource{
 			"book":         book,
-			"book_edition": bookEdition,
+			"book-edition": bookEdition,
 			"publisher":    publisher,
 			"operation":    OperationResourceWithDefaults(),
 			"tome":         tome,

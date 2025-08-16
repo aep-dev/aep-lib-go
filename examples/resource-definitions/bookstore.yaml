@@ -77,9 +77,9 @@ resources:
           properties:
             success:
               type: boolean
-  book_edition:
-    singular: "book_edition"
-    plural: "book_editions"
+  book-edition:
+    singular: "book-edition"
+    plural: "book-editions"
     parents: ["book"]
     schema:
       type: object

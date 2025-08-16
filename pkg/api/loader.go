@@ -9,7 +9,7 @@ import (
 	"github.com/aep-dev/aep-lib-go/pkg/openapi"
 )
 
-var singularPluralRegex = regexp.MustCompile("^[a-z][a-z0-9_]*[a-z0-9]$")
+var singularPluralRegex = regexp.MustCompile("^[a-z][a-z0-9_-]*[a-z0-9]$")
 
 func LoadAPIFromJson(data []byte) (*API, error) {
 	api := &API{}
