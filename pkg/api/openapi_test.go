@@ -316,7 +316,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 					Params: []openapi.Parameter{
 						{
 							In:       "path",
-							Name:     "database",
+							Name:     "database_id",
 							Required: true,
 							Schema: &openapi.Schema{
 								Type: "string",
@@ -363,7 +363,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 					Params: []openapi.Parameter{
 						{
 							In:       "path",
-							Name:     "database",
+							Name:     "database_id",
 							Required: true,
 							Schema: &openapi.Schema{
 								Type: "string",
@@ -401,7 +401,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 					Params: []openapi.Parameter{
 						{
 							In:       "path",
-							Name:     "account",
+							Name:     "account_id",
 							Required: true,
 							Schema: &openapi.Schema{
 								Type: "string",
@@ -412,7 +412,7 @@ func TestGenerateParentPatternsWithParams(t *testing.T) {
 						},
 						{
 							In:       "path",
-							Name:     "database",
+							Name:     "database_id",
 							Required: true,
 							Schema: &openapi.Schema{
 								Type: "string",

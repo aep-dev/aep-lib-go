@@ -492,9 +492,6 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 			pElem := r.patternElems[i+1]
 			// Extract the parameter name without the _id suffix
 			paramName := pElem[1 : len(pElem)-1]
-			if strings.HasSuffix(paramName, "_id") {
-				paramName = paramName[:len(paramName)-3]
-			}
 			params = append(params, openapi.Parameter{
 				In:       "path",
 				Name:     paramName,
@@ -518,11 +515,11 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 	for _, parent := range r.ParentResources() {
 		singular := parent.Singular
 		// Convert kebab-case singular to snake_case for path variables
-		singularSnake := cases.KebabToSnakeCase(singular)
-		basePattern := fmt.Sprintf("/%s/{%s_id}", CollectionName(parent), singularSnake)
+		singularSnakeParam := cases.KebabToSnakeCase(singular) + "_id"
+		basePattern := fmt.Sprintf("/%s/{%s}", CollectionName(parent), singularSnakeParam)
 		baseParam := openapi.Parameter{
 			In:       "path",
-			Name:     singularSnake,
+			Name:     singularSnakeParam,
 			Required: true,
 			Schema: &openapi.Schema{
 				Type: "string",

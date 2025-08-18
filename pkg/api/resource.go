@@ -9,6 +9,14 @@ import (
 )
 
 type Resource struct {
+	// the resource singular name is the name of the resource
+	// in the API. It is used to generate the pattern for the resource.
+	// e.g: book-edition -> book-editions
+	//
+	// The singular name is also used to generate the schema name.
+	// e.g: book-edition -> BookEdition
+	//
+	// the resource singular **must** be in kebab-case.
 	Singular        string      `json:"singular"`
 	Plural          string      `json:"plural"`
 	Parents         []string    `json:"parents,omitempty"`
