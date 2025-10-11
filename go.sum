@@ -4,6 +4,8 @@ buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251010060344-16735354bd4d
 buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251010060344-16735354bd4d.1/go.mod h1:6eR/uxhdJhB/Gk0vgKgcar7k/qKXZEArkfpF87AjF/A=
 buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011054345-69202ce22a67.1 h1:JNlDDKI9OtieWhXP4DdTx4H6P0WsQbW8B+cmjGCHYTE=
 buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011054345-69202ce22a67.1/go.mod h1:6eR/uxhdJhB/Gk0vgKgcar7k/qKXZEArkfpF87AjF/A=
+buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011185002-1454930c8f99.1 h1:oLb4mOvnV3wNCVcbHsw4KCtQWtMbf8VURShtwM0N2A0=
+buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011185002-1454930c8f99.1/go.mod h1:6eR/uxhdJhB/Gk0vgKgcar7k/qKXZEArkfpF87AjF/A=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20240221180331-f05a6f4403ce.1 h1:dfdSuW4WQvkD8vsFv+iTe3NZWBHR1PQlDR3eEXEmbnI=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20240221180331-f05a6f4403ce.1/go.mod h1:avRlCjnFzl98VPaeCtJ24RrV/wwHFzB8sWXhj26+n/U=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20240221180331-f05a6f4403ce.1 h1:19otp5rJIcsvEF2aZtpXLSunZFD6kaHnP/u107WpLQI=

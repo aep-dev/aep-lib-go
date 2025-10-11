@@ -3,7 +3,7 @@ module github.com/aep-dev/aep-lib-go
 go 1.23
 
 require (
-	buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011054345-69202ce22a67.1
+	buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011185002-1454930c8f99.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/jhump/protoreflect v1.17.0

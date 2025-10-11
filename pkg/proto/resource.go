@@ -174,7 +174,11 @@ func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStora
 		}
 		if required[name] {
 			o := &descriptorpb.FieldOptions{}
+			// Keep Google API annotation for backward compatibility
 			proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
+			proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
+				FieldBehavior: []apipb.FieldBehavior{apipb.FieldBehavior_FIELD_BEHAVIOR_REQUIRED},
+			})
 			f.SetOptions(o)
 		}
 		// Set the JSON name after any options are set to ensure it's not overwritten
@@ -613,9 +617,11 @@ func generateParentHTTPPath(r *api.Resource) string {
 
 func addParentField(r *api.Resource, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
+	// Keep Google API annotation for backward compatibility
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
 	proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
 		ResourceReference: []string{},
+		FieldBehavior:     []apipb.FieldBehavior{apipb.FieldBehavior_FIELD_BEHAVIOR_REQUIRED},
 	})
 	f := builder.
 		NewField(constants.FIELD_PARENT_NAME, builder.FieldTypeString()).
@@ -638,9 +644,11 @@ func addIdField(_ *api.Resource, mb *builder.MessageBuilder) {
 
 func addPathField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
+	// Keep Google API annotation for backward compatibility
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
 	proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
 		ResourceReference: []string{fmt.Sprintf("%v/%v", a.Name, r.Singular)},
+		FieldBehavior:     []apipb.FieldBehavior{apipb.FieldBehavior_FIELD_BEHAVIOR_REQUIRED},
 	})
 	f := builder.NewField(constants.FIELD_PATH_NAME, builder.FieldTypeString()).
 		SetNumber(constants.FIELD_PATH_NUMBER).
@@ -654,7 +662,11 @@ func addPathField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
 
 func addResourceField(r *api.Resource, resMsg Message, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
+	// Keep Google API annotation for backward compatibility
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
+	proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
+		FieldBehavior: []apipb.FieldBehavior{apipb.FieldBehavior_FIELD_BEHAVIOR_REQUIRED},
+	})
 	f := builder.NewField(cases.KebabToSnakeCase(r.Singular), resMsg.FieldType()).
 		SetNumber(constants.FIELD_RESOURCE_NUMBER).
 		SetComments(builder.Comments{
@@ -691,7 +703,11 @@ func addNextPageToken(_ *api.Resource, mb *builder.MessageBuilder) {
 
 func addForceField(_ *api.API, _ *api.Resource, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
+	// Keep Google API annotation for backward compatibility
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_OPTIONAL})
+	proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
+		FieldBehavior: []apipb.FieldBehavior{apipb.FieldBehavior_FIELD_BEHAVIOR_OPTIONAL},
+	})
 	f := builder.NewField(constants.FIELD_FORCE_NAME, builder.FieldTypeBool()).
 		SetNumber(constants.FIELD_FORCE_NUMBER).
 		SetComments(builder.Comments{
