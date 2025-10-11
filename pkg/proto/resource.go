@@ -614,7 +614,9 @@ func generateParentHTTPPath(r *api.Resource) string {
 func addParentField(r *api.Resource, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
-	proto.SetExtension(o, annotations.E_ResourceReference, &annotations.ResourceReference{})
+	proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
+		ResourceReference: []string{},
+	})
 	f := builder.
 		NewField(constants.FIELD_PARENT_NAME, builder.FieldTypeString()).
 		SetNumber(constants.FIELD_PARENT_NUMBER).
@@ -637,8 +639,8 @@ func addIdField(_ *api.Resource, mb *builder.MessageBuilder) {
 func addPathField(a *api.API, r *api.Resource, mb *builder.MessageBuilder) {
 	o := &descriptorpb.FieldOptions{}
 	proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_REQUIRED})
-	proto.SetExtension(o, annotations.E_ResourceReference, &annotations.ResourceReference{
-		Type: fmt.Sprintf("%v/%v", a.Name, r.Singular),
+	proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
+		ResourceReference: []string{fmt.Sprintf("%v/%v", a.Name, r.Singular)},
 	})
 	f := builder.NewField(constants.FIELD_PATH_NAME, builder.FieldTypeString()).
 		SetNumber(constants.FIELD_PATH_NUMBER).
