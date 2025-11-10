@@ -3,7 +3,7 @@ module github.com/aep-dev/aep-lib-go
 go 1.23
 
 require (
-	buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251011185002-1454930c8f99.1
+	buf.build/gen/go/aep/api/protocolbuffers/go v1.36.10-20251109183837-26a011a354ee.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/jhump/protoreflect v1.17.0
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20240221180331-f05a6f4403ce.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect

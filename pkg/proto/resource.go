@@ -47,7 +47,7 @@ func AddResource(r *api.Resource, a *api.API, fb *builder.FileBuilder, sb *build
 	// Do not recreate resources if they've already been created.
 	resMsg, ok := ms.Messages[fmt.Sprintf("%s/%s", a.Name, r.Singular)]
 	if options := resMsg.Options(); options != nil {
-		proto.SetExtension(options, annotations.E_Resource, resourceDescriptor(a, r))
+		proto.SetExtension(options, apipb.E_Resource, resourceDescriptor(a, r))
 	}
 	if !ok {
 		return fmt.Errorf("%s not found in message storage", r.Singular)
@@ -718,11 +718,11 @@ func addForceField(_ *api.API, _ *api.Resource, mb *builder.MessageBuilder) {
 	mb.AddField(f)
 }
 
-func resourceDescriptor(a *api.API, r *api.Resource) *annotations.ResourceDescriptor {
+func resourceDescriptor(a *api.API, r *api.Resource) *apipb.ResourceDescriptor {
 	patterns := []string{
 		strings.Join(r.PatternElems(), "/"),
 	}
-	return &annotations.ResourceDescriptor{
+	return &apipb.ResourceDescriptor{
 		Type:     fmt.Sprintf("%s/%s", a.Name, r.Singular),
 		Pattern:  patterns,
 		Singular: r.Singular,
