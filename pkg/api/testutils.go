@@ -12,8 +12,18 @@ func ExampleAPI() *API {
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
-				"title": {Type: "string", XAEPFieldNumber: 1},
-				"id":    {Type: "string", XAEPFieldNumber: 2},
+				"title": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 1,
+					},
+				},
+				"id": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 2,
+					},
+				},
 			},
 		},
 		Methods: Methods{
@@ -34,8 +44,18 @@ func ExampleAPI() *API {
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
-				"name": {Type: "string", XAEPFieldNumber: 1},
-				"id":   {Type: "string", XAEPFieldNumber: 2},
+				"name": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 1,
+					},
+				},
+				"id": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 2,
+					},
+				},
 			},
 		},
 		Methods: Methods{
@@ -62,7 +82,12 @@ func ExampleAPI() *API {
 				Response: &openapi.Schema{
 					Type: "object",
 					Properties: map[string]openapi.Schema{
-						"archived": {Type: "boolean", XAEPFieldNumber: 1},
+						"archived": {
+							Type: "boolean",
+							XAEPField: &openapi.XAEPField{
+								FieldNumber: 1,
+							},
+						},
 					},
 				},
 			},
@@ -79,8 +104,18 @@ func ExampleAPI() *API {
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
-				"name": {Type: "string", XAEPFieldNumber: 1},
-				"id":   {Type: "string", XAEPFieldNumber: 2},
+				"name": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 1,
+					},
+				},
+				"id": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 2,
+					},
+				},
 			},
 		},
 		Methods: Methods{
@@ -110,7 +145,12 @@ func ExampleAPI() *API {
 				Response: &openapi.Schema{
 					Type: "object",
 					Properties: map[string]openapi.Schema{
-						"archived": {Type: "boolean", XAEPFieldNumber: 1},
+						"archived": {
+							Type: "boolean",
+							XAEPField: &openapi.XAEPField{
+								FieldNumber: 1,
+							},
+						},
 					},
 				},
 				IsLongRunning: true,
@@ -128,7 +168,12 @@ func ExampleAPI() *API {
 		Schema: &openapi.Schema{
 			Type: "object",
 			Properties: map[string]openapi.Schema{
-				"date": {Type: "string", XAEPFieldNumber: 1},
+				"date": {
+					Type: "string",
+					XAEPField: &openapi.XAEPField{
+						FieldNumber: 1,
+					},
+				},
 			},
 		},
 		Methods: Methods{
@@ -151,7 +196,12 @@ func ExampleAPI() *API {
 			"account": {
 				Type: "object",
 				Properties: map[string]openapi.Schema{
-					"name": {Type: "string", XAEPFieldNumber: 1},
+					"name": {
+						Type: "string",
+						XAEPField: &openapi.XAEPField{
+							FieldNumber: 1,
+						},
+					},
 				},
 			},
 		},

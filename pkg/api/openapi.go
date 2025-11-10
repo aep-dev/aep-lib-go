@@ -524,8 +524,8 @@ func generateParentPatternsWithParams(r *Resource) (string, *[]PathWithParams) {
 			Schema: &openapi.Schema{
 				Type: "string",
 			},
-			XAEPResourceRef: &openapi.XAEPResourceRef{
-				Resource: singular,
+			XAEPField: &openapi.XAEPField{
+				ResourceReference: []string{singular},
 			},
 		}
 		if len(parent.ParentResources()) == 0 {
@@ -565,11 +565,16 @@ func addMethodToPath(paths map[string]*openapi.PathItem, path, method string, me
 	}
 }
 
-// removeXAEPFieldNumber removes the x-aep-field-number from the schema.
-// Currently x-aep-field-number is not an official annotation in the AEPs,
+// removeXAEPFieldNumber removes the field_number from the schema.
+// Currently field_number is not an official annotation in the AEPs,
 // and adding it will confuse consumers.
 func removeXAEPFieldNumber(schema *openapi.Schema) {
-	schema.XAEPFieldNumber = 0
+	if schema.XAEPField != nil {
+		schema.XAEPField.FieldNumber = 0
+		if schema.XAEPField.Behavior == nil && schema.XAEPField.ResourceReference == nil && schema.XAEPField.ResourceReferenceChildType == nil {
+			schema.XAEPField = nil
+		}
+	}
 	if schema.Properties != nil {
 		for key, property := range schema.Properties {
 			removeXAEPFieldNumber(&property)

@@ -159,9 +159,13 @@ func GenerateMessage(name string, s *openapi.Schema, a *api.API, m *MessageStora
 	sorted_field_numbers := []int{}
 	field_names_by_number := map[int]string{}
 	for k, s := range s.Properties {
-		if s.XAEPFieldNumber != 0 {
-			field_names_by_number[s.XAEPFieldNumber] = k
-			sorted_field_numbers = append(sorted_field_numbers, s.XAEPFieldNumber)
+		fieldNumber := 0
+		if s.XAEPField != nil && s.XAEPField.FieldNumber != 0 {
+			fieldNumber = s.XAEPField.FieldNumber
+		}
+		if fieldNumber != 0 {
+			field_names_by_number[fieldNumber] = k
+			sorted_field_numbers = append(sorted_field_numbers, fieldNumber)
 		}
 	}
 	slices.Sort(sorted_field_numbers)

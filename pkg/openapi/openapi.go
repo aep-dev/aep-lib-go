@@ -143,13 +143,13 @@ type Operation struct {
 }
 
 type Parameter struct {
-	Name            string           `json:"name,omitempty"`
-	In              string           `json:"in,omitempty"`
-	Description     string           `json:"description,omitempty"`
-	Required        bool             `json:"required,omitempty"`
-	Schema          *Schema          `json:"schema,omitempty"`
-	Type            string           `json:"type,omitempty"`
-	XAEPResourceRef *XAEPResourceRef `json:"x-aep-resource-reference,omitempty"`
+	Name        string     `json:"name,omitempty"`
+	In          string     `json:"in,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Required    bool       `json:"required,omitempty"`
+	Schema      *Schema    `json:"schema,omitempty"`
+	Type        string     `json:"type,omitempty"`
+	XAEPField   *XAEPField `json:"x-aep-field,omitempty"`
 }
 
 type Response struct {
@@ -172,13 +172,13 @@ type MediaType struct {
 }
 
 type Schema struct {
-	Type            string        `json:"type,omitempty"`
-	Format          string        `json:"format,omitempty"`
-	Items           *Schema       `json:"items,omitempty"`
-	Properties      Properties    `json:"properties,omitempty"`
-	Ref             string        `json:"$ref,omitempty"`
-	XAEPResource    *XAEPResource `json:"x-aep-resource,omitempty"`
-	XAEPFieldNumber int           `json:"x-aep-field-number,omitempty"`
+	Type         string        `json:"type,omitempty"`
+	Format       string        `json:"format,omitempty"`
+	Items        *Schema       `json:"items,omitempty"`
+	Properties   Properties    `json:"properties,omitempty"`
+	Ref          string        `json:"$ref,omitempty"`
+	XAEPResource *XAEPResource `json:"x-aep-resource,omitempty"`
+	XAEPField    *XAEPField    `json:"x-aep-field,omitempty"`
 	/// Documents the name of the proto message to use for generation.
 	/// If unset, proto generation will not create a proto message for this schema.
 	XAEPProtoMessageName string   `json:"x-aep-proto-message-name,omitempty"`
@@ -203,8 +203,11 @@ type XAEPResource struct {
 	Parents  []string `json:"parents,omitempty"`
 }
 
-type XAEPResourceRef struct {
-	Resource string `json:"resource,omitempty"`
+type XAEPField struct {
+	Behavior                   []string `json:"behavior,omitempty"`
+	ResourceReference          []string `json:"resource_reference,omitempty"`
+	ResourceReferenceChildType []string `json:"resource_reference_child_type,omitempty"`
+	FieldNumber                int      `json:"field_number,omitempty"`
 }
 
 type XAEPLongRunningOperation struct {

@@ -43,9 +43,11 @@ func AddImplicitFieldsAndValidate(api *API) error {
 			r.Schema.Properties = make(map[string]openapi.Schema)
 		}
 		r.Schema.Properties[constants.FIELD_PATH_NAME] = openapi.Schema{
-			Type:            "string",
-			Description:     "The server-assigned path of the resource, which is unique within the service.",
-			XAEPFieldNumber: constants.FIELD_PATH_NUMBER,
+			Type:        "string",
+			Description: "The server-assigned path of the resource, which is unique within the service.",
+			XAEPField: &openapi.XAEPField{
+				FieldNumber: constants.FIELD_PATH_NUMBER,
+			},
 		}
 		for _, p := range r.Parents {
 			if parent, ok := api.Resources[p]; ok {
