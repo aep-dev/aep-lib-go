@@ -201,6 +201,7 @@ type XAEPResource struct {
 	Plural   string   `json:"plural,omitempty"`
 	Patterns []string `json:"patterns,omitempty"`
 	Parents  []string `json:"parents,omitempty"`
+	Type     string   `json:"type,omitempty"`
 }
 
 type XAEPField struct {

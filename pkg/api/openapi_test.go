@@ -257,6 +257,7 @@ func TestToOpenAPI(t *testing.T) {
 				assert.True(t, exists, "Expected schema %s not found", resource.Singular)
 				assert.Equal(t, resource.Schema.Type, schema.Type)
 				assert.Equal(t, resource.Schema.XAEPResource.Singular, resource.Singular)
+				assert.Equal(t, resource.Schema.XAEPResource.Type, fmt.Sprintf("%s/%s", tt.api.Name, resource.Singular))
 			}
 			for _, schema := range tt.expectedSchemas {
 				_, exists := openAPI.Components.Schemas[schema]

@@ -422,6 +422,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 			Plural:   r.Plural,
 			Patterns: patterns,
 			Parents:  r.Parents,
+			Type:     fmt.Sprintf("%s/%s", api.Name, r.Singular),
 		}
 		components.Schemas[r.Singular] = *d
 	}
