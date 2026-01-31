@@ -415,6 +415,42 @@ func TestGetAPI(t *testing.T) {
 			},
 		},
 		{
+			name: "resource with create returning 201",
+			api: &openapi.OpenAPI{
+				OpenAPI: "3.1.0",
+				Servers: []openapi.Server{{URL: "https://api.example.com"}},
+				Paths: map[string]*openapi.PathItem{
+					"/widgets": {
+						Post: &openapi.Operation{
+							Responses: map[string]openapi.Response{
+								"201": {
+									Content: map[string]openapi.MediaType{
+										"application/json": {
+											Schema: &openapi.Schema{
+												Ref: "#/components/schemas/Widget",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Components: openapi.Components{
+					Schemas: map[string]openapi.Schema{
+						"Widget": {
+							Type: "object",
+						},
+					},
+				},
+			},
+			validateResult: func(t *testing.T, sd *API) {
+				widget, ok := sd.Resources["widget"]
+				assert.True(t, ok, "widget resource should exist")
+				assert.NotNil(t, widget.Methods.Create, "should have CREATE method (from 201 response)")
+			},
+		},
+		{
 			name: "resource with long running operations",
 			api: &openapi.OpenAPI{
 				OpenAPI: "3.1.0",

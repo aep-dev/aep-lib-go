@@ -136,20 +136,22 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 		} else {
 			// create method
 			if pathItem.Post != nil {
-				// check if there is a query parameter "id"
-				lroDetails = pathItem.Post.XAEPLongRunningOperation
-				if resp, ok := pathItem.Post.Responses["200"]; ok {
-					sRef = api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
-					supportsUserSettableCreate := false
-					for _, param := range pathItem.Post.Parameters {
-						if param.Name == "id" {
-							supportsUserSettableCreate = true
-							break
+				for _, statusCode := range []string{"200", "201"} {
+					// check if there is a query parameter "id"
+					if resp, ok := pathItem.Post.Responses[statusCode]; ok {
+						lroDetails = pathItem.Post.XAEPLongRunningOperation
+						sRef = api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
+						supportsUserSettableCreate := false
+						for _, param := range pathItem.Post.Parameters {
+							if param.Name == "id" {
+								supportsUserSettableCreate = true
+								break
+							}
 						}
-					}
-					r.Methods.Create = &CreateMethod{
-						SupportsUserSettableCreate: supportsUserSettableCreate,
-						IsLongRunning:              lroDetails != nil,
+						r.Methods.Create = &CreateMethod{
+							SupportsUserSettableCreate: supportsUserSettableCreate,
+							IsLongRunning:              lroDetails != nil,
+						}
 					}
 				}
 			}
