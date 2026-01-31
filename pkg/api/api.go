@@ -197,7 +197,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 		if lroDetails != nil {
 			sRef = lroDetails.Response.Schema
 		}
-		if sRef != nil {
+		if sRef != nil && p.CustomMethodName == "" {
 			// s should always be a reference to a schema in the components section.
 			parts := strings.Split(sRef.Ref, "/")
 			key := parts[len(parts)-1]
