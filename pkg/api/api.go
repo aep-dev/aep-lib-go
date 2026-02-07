@@ -362,12 +362,6 @@ func getOrPopulateResource(singular string, pattern []string, s *openapi.Schema,
 	}
 	// update the resource map
 	resourceBySingular[singular] = r
-	if s != nil {
-		if pathProp, ok := s.Properties["path"]; ok {
-			pathProp.ReadOnly = true
-			s.Properties["path"] = pathProp
-		}
-	}
 	return r, nil
 }
 

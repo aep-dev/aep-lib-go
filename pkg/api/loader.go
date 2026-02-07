@@ -48,6 +48,7 @@ func AddImplicitFieldsAndValidate(api *API) error {
 			XAEPField: &openapi.XAEPField{
 				FieldNumber: constants.FIELD_PATH_NUMBER,
 			},
+			ReadOnly: true,
 		}
 		for _, p := range r.Parents {
 			if parent, ok := api.Resources[p]; ok {

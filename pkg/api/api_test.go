@@ -588,50 +588,6 @@ func TestGetAPI(t *testing.T) {
 				assert.True(t, customOp.IsLongRunning, "customOp method should be marked as long running")
 			},
 		},
-		{
-			name: "resource with path field should be readOnly",
-			api: &openapi.OpenAPI{
-				OpenAPI: "3.1.0",
-				Servers: []openapi.Server{{URL: "https://api.example.com"}},
-				Paths: map[string]*openapi.PathItem{
-					"/widgets/{widget_id}": {
-						Get: &openapi.Operation{
-							Responses: map[string]openapi.Response{
-								"200": {
-									Content: map[string]openapi.MediaType{
-										"application/json": {
-											Schema: &openapi.Schema{
-												Ref: "#/components/schemas/Widget",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Components: openapi.Components{
-					Schemas: map[string]openapi.Schema{
-						"Widget": {
-							Type: "object",
-							Properties: map[string]openapi.Schema{
-								"name": {Type: "string"},
-								"path": {Type: "string"},
-							},
-						},
-					},
-				},
-			},
-			validateResult: func(t *testing.T, sd *API) {
-				widget, ok := sd.Resources["widget"]
-				require.True(t, ok, "widget resource should exist")
-				require.NotNil(t, widget.Schema, "widget schema should not be nil")
-
-				pathProp, ok := widget.Schema.Properties["path"]
-				assert.True(t, ok, "path property should exist")
-				assert.True(t, pathProp.ReadOnly, "path property should be readOnly")
-			},
-		},
 	}
 
 	for _, tt := range tests {
