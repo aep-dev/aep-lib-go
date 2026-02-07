@@ -206,6 +206,16 @@ func protoField(name string, number int, s openapi.Schema, a *api.API, m *Messag
 		f.SetRepeated()
 	}
 
+	if s.ReadOnly {
+		o := &descriptorpb.FieldOptions{}
+		// Keep Google API annotation for backward compatibility
+		proto.SetExtension(o, annotations.E_FieldBehavior, []annotations.FieldBehavior{annotations.FieldBehavior_OUTPUT_ONLY})
+		proto.SetExtension(o, apipb.E_FieldInfo, &apipb.FieldInfo{
+			FieldBehavior: []apipb.FieldBehavior{apipb.FieldBehavior_FIELD_BEHAVIOR_OUTPUT_ONLY},
+		})
+		f.SetOptions(o)
+	}
+
 	return f, nil
 }
 
