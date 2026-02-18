@@ -239,7 +239,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 						"200": {
 							Description: "Successful response",
 							Content: map[string]openapi.MediaType{
-								"application/merge-patch+json": {
+								"application/json": {
 									Schema: &openapi.Schema{
 										Ref: schemaRef,
 									},

@@ -127,7 +127,7 @@ func GetAPI(api *openapi.OpenAPI, serverURL, pathPrefix string) (*API, error) {
 			if pathItem.Patch != nil {
 				lroDetails = pathItem.Patch.XAEPLongRunningOperation
 				if resp, ok := pathItem.Patch.Responses["200"]; ok {
-					sRef = api.GetSchemaFromResponse(resp, openapi.JSON_MERGE_PATCH)
+					sRef = api.GetSchemaFromResponse(resp, openapi.APPLICATION_JSON)
 					r.Methods.Update = &UpdateMethod{
 						IsLongRunning: lroDetails != nil,
 					}
