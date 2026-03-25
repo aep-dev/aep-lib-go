@@ -185,7 +185,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					Parameters:  params,
 					RequestBody: &bodyParam,
 					Responses: map[string]openapi.Response{
-						"200": resourceResponse,
+						"201": resourceResponse,
 					},
 				}
 				if r.Methods.Create.IsLongRunning {
@@ -326,6 +326,7 @@ func ConvertToOpenAPI(api *API) (*openapi.OpenAPI, error) {
 					RequestBody: &bodyParam,
 					Responses: map[string]openapi.Response{
 						"200": resourceResponse,
+						"201": resourceResponse,
 					},
 				}
 				if r.Methods.Apply.IsLongRunning {
